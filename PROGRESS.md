@@ -81,3 +81,9 @@ New concepts: **dependency injection** (`Depends(get_db)` — declare what you n
 Hit the "file exists but is empty on disk" issue twice more (`security.py`, then `schemas.py`) — worth remembering as a recurring gotcha: always confirm the file is actually *saved* in the editor (no unsaved-changes dot on the tab) before assuming code that was typed is code that exists.
 
 **Verified for real, not just trusted:** POSTed a real signup request via `curl`, got back `{"id":1,"email":"test@example.com","created_at":"..."}` with no password field, then queried Postgres directly and confirmed the row exists with a bcrypt hash (`$2b$12$...`) in `hashed_password` — never the plaintext.
+
+### Full review pass
+
+Went back through every concept from this session one at a time (containers/WSL2, ORM, `default=`/lambda, migrations, hashing, schemas, dependency injection, `response_model`, import-time vs. call-time errors) — migrations needed a second, more concrete pass (grounded in the actual real commands/files from this project instead of an analogy) before it landed.
+
+Checked in afterward: couldn't rebuild any of this from a blank page yet, and that's the expected state after one sitting covering ~8 genuinely new areas — not a flaw in the approach. What's already real and independently-owned: debugging several actual errors from a traceback alone (the `lambda` typo, the missing `Session` import, the unsaved-file `ImportError`s). The metric that actually matters going forward: does each repeat of a pattern need less scaffolding than the last, not "can I do this cold today."

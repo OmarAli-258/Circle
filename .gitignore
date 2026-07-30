@@ -23,3 +23,6 @@ Thumbs.db
 
 # Docker
 postgres-data/
+
+# Personal scratch/learning exercises — not part of the actual project
+practice/
