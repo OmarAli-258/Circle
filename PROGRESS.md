@@ -87,3 +87,27 @@ Hit the "file exists but is empty on disk" issue twice more (`security.py`, then
 Went back through every concept from this session one at a time (containers/WSL2, ORM, `default=`/lambda, migrations, hashing, schemas, dependency injection, `response_model`, import-time vs. call-time errors) — migrations needed a second, more concrete pass (grounded in the actual real commands/files from this project instead of an analogy) before it landed.
 
 Checked in afterward: couldn't rebuild any of this from a blank page yet, and that's the expected state after one sitting covering ~8 genuinely new areas — not a flaw in the approach. What's already real and independently-owned: debugging several actual errors from a traceback alone (the `lambda` typo, the missing `Session` import, the unsaved-file `ImportError`s). The metric that actually matters going forward: does each repeat of a pattern need less scaffolding than the last, not "can I do this cold today."
+
+## 2026-07-31
+
+### Decorators (practice/) — took many passes, finally landed
+
+Spent a long time on `@decorator` syntax — abstract description, code trace, runtime proof (`.__name__`), atomic step-by-step, and a story analogy (a comedian + a hype-man who does a drumroll/applause around the joke) before it actually stuck. Final correct understanding, in own words: a decorator function (like `shout`) runs *once*, immediately, at the moment `@shout` is written above a function — it builds a new function (`wrapper`) that does something before/after, and *that* is what actually runs on every future call, not `shout` itself again. The point of it: apply the same extra behavior to many different functions without copy-pasting that behavior into each one — which is exactly what `@app.get`/`@app.post` have been doing this whole project (registering routes) rather than "printing before/after."
+
+Key lesson on process: too many different explanations stacked back-to-back stopped helping and started being noise. What worked in the end: one complete, connected, plain-language explanation in a single message (no fragments), followed by a concrete non-code analogy, followed by mapping that analogy's exact words onto the real code line-by-line.
+
+### JWT + create_access_token
+
+New vocabulary, defined plainly: a JWT's "payload"/"claims" is just a dictionary of facts stored in the token. `"sub"` (subject) = who the token belongs to; `"exp"` (expiration) = when it stops being valid — both special key names the `jwt` library specifically looks for. `jwt.encode(payload, secret, algorithm=...)` signs that dictionary into one scrambled string using a secret only the server knows, so tampering breaks the signature.
+
+Real bugs hit and fixed via the run-it-yourself loop: `timedelta.utc` instead of `timezone.utc`, `user_id.name` instead of `user_id` (found out the hard way that `user_id` was already a plain int, not an object with a `.name`), and `settings.jwt.secret` instead of `settings.jwt_secret` (plus a missing import of `settings` entirely). Verified for real: called `create_access_token(1)` and got back an actual three-part JWT string.
+
+### Login endpoint — auth is now fully done
+
+Added `UserLogin`/`Token` schemas and `POST /login`: look up by email, reject with a **generic** error (`"incorrect email or password"`) if either the user doesn't exist or the password is wrong — deliberately the same message either way, so a failed attempt never reveals which part was incorrect. On success, issues a real JWT via `create_access_token`.
+
+One real bug: imported/used `Userlogin` (lowercase `l`) in `main.py` while the actual class was `UserLogin` (capital `L`) in `schemas.py` — Python names are case-sensitive, so this would have failed to import.
+
+**Verified for real, all three cases:** correct credentials → real JWT back. Wrong password → `{"detail":"incorrect email or password"}`. Nonexistent email → the exact same message, proving no information leaks about which part failed.
+
+This closes out Week 1 (auth) — signup, login, and JWT issuance all working end-to-end. Next: a dependency that reads a JWT back off future requests to identify "who's calling this endpoint," then the Week 2 design conversation (friend graph, availability, outing requests) before writing any of that code.
