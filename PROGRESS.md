@@ -111,3 +111,25 @@ One real bug: imported/used `Userlogin` (lowercase `l`) in `main.py` while the a
 **Verified for real, all three cases:** correct credentials → real JWT back. Wrong password → `{"detail":"incorrect email or password"}`. Nonexistent email → the exact same message, proving no information leaks about which part failed.
 
 This closes out Week 1 (auth) — signup, login, and JWT issuance all working end-to-end. Next: a dependency that reads a JWT back off future requests to identify "who's calling this endpoint," then the Week 2 design conversation (friend graph, availability, outing requests) before writing any of that code.
+
+## 2026-08-01
+
+### Generators and `yield` (practice/) — landed cleanly, first real try
+
+Applied the recalibrated teaching approach (motivation first, one solid analogy — a waiter bringing food, then waiting, then clearing the table — mapped directly onto real code) and it worked on the first pass, no repeated attempts needed this time.
+
+Core understanding, confirmed correct in own words: calling a generator function (one containing `yield`) does **not** run its code immediately — it builds a paused, not-yet-started object. `next(order)` is what actually runs it, up to the next `yield`, where it pauses and hands back the yielded value. Calling `next()` again resumes exactly where it paused. A function with N `yield`s needs N+1 `next()` calls to fully play out — the last of which raises `StopIteration`, Python's built-in signal that a generator has completely finished (even if that same call also ran real code first, like a `finally` block).
+
+Connected to real code: `get_db()` in `database.py` is a generator so it can create a session, hand it over via `yield db`, pause while the endpoint uses it, then resume and clean up — `try`/`finally` guarantees `db.close()` runs whether the endpoint succeeded or crashed, since leaked open database connections are a real production problem.
+
+### `get_current_user` dependency — auth infrastructure fully done
+
+Added `get_current_user` to `security.py`: `HTTPBearer` extracts the token from the `Authorization` header, `jwt.decode` verifies its signature and unpacks the `sub`/`exp` payload (rejecting via `except jwt.InvalidTokenError` if tampered/expired), then looks up the real `User` by that id. Wired into a test endpoint (`GET /me`) using the exact same `Depends(...)` pattern as `db`.
+
+New piece: `except` (the other half of `try`, alongside `finally` learned earlier) — `try` marks an attempt, `except SomeError:` marks what to do *specifically* if that particular error happens, versus `finally` which always runs regardless.
+
+Good observation caught independently: `@app.get("/health")` looks different from the plain `@shout` decorator learned yesterday — because it is, in a precise way. `app.get("/health")` runs first (it's a normal function call with an argument), and *that call* returns the actual decorator, which then gets applied to the function below. This is a "decorator factory" — a function that builds a customized decorator rather than being one directly. Also, unlike `shout`, which replaced the function with a new wrapper, `app.get(...)`'s decorator mainly *registers* the function into FastAPI's routing table and hands it back essentially unchanged.
+
+**Verified for real, three cases:** no token → `403` (FastAPI's `HTTPBearer` default for missing credentials). Garbage/invalid token → `401` with the custom message. Real token from a live login → actual protected user data returned via `GET /me`.
+
+This completes all of auth's infrastructure. Next: the Week 2 design conversation (friend graph, availability, outing requests) before writing any of that code.

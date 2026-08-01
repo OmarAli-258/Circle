@@ -1,7 +1,7 @@
 from fastapi import Depends, FastAPI, HTTPException
 from app.models import User
 from app.schemas import UserCreate, UserOut, UserLogin, Token
-from app.security import hash_password, verify_password, create_access_token
+from app.security import hash_password, verify_password, create_access_token, get_current_user
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -40,3 +40,6 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="incorrect email or password")
     token = create_access_token(user.id)
     return Token(access_token=token)
+@app.get("/me",response_model=UserOut)
+def read_current_user(current_user: User = Depends(get_current_user)):
+    return current_user
