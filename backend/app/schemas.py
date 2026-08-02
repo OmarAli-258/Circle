@@ -15,3 +15,13 @@ class UserLogin(BaseModel):
 class Token(BaseModel):
     access_token : str
     token_type : str = "bearer"
+class FriendRequestCreate(BaseModel):
+    recipient_id : int
+class FriendRequestOut(BaseModel):
+    id : int
+    requester_id : int
+    recipient_id : int
+    status : str
+    created_at : datetime
+    model_config = {"from_attributes" : True }
+    

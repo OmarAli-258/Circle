@@ -1,6 +1,6 @@
 from fastapi import Depends, FastAPI, HTTPException
-from app.models import User
-from app.schemas import UserCreate, UserOut, UserLogin, Token
+from app.models import User, FriendRequest
+from app.schemas import UserCreate, UserOut, UserLogin, Token , FriendRequestOut,FriendRequestCreate
 from app.security import hash_password, verify_password, create_access_token, get_current_user
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -43,3 +43,46 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
 @app.get("/me",response_model=UserOut)
 def read_current_user(current_user: User = Depends(get_current_user)):
     return current_user
+
+@app.post("/friend_requests", response_model=FriendRequestOut)
+def send_friend_request(request_data :FriendRequestCreate, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    if request_data.recipient_id == current_user.id:
+        raise HTTPException(status_code= 400, detail="cannot send friend request to yourself")
+    recipient = db.query(User).filter(User.id == request_data.recipient_id).first()
+    if not recipient:
+        raise HTTPException(status_code=404, detail="user not found")
+    new_request= FriendRequest(
+        requester_id=current_user.id,
+        recipient_id=request_data.recipient_id,
+        status="pending",
+    )
+    db.add(new_request)
+    db.commit()
+    db.refresh(new_request)
+    return new_request
+@app.post("/friend_requests/{request_id}/accept", response_model=FriendRequestOut)
+def accept_friend_request(request_id: int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    friend_request=db.query(FriendRequest).filter(FriendRequest.id == request_id).first()
+    if not friend_request:
+        raise HTTPException(status_code=404, detail="friend request not found")
+    if friend_request.recipient_id != current_user.id:
+        raise HTTPException(status_code =403, detail="wrong user to accept ")
+    if friend_request.status != "pending":
+        raise HTTPException(status_code= 400, detail="request not pending")
+    friend_request.status = "accepted"
+    db.commit()
+    db.refresh(friend_request)
+    return friend_request
+@app.post("/friend_requests/{request_id}/decline", response_model=FriendRequestOut)
+def decline_friend_request(request_id: int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    friend_request=db.query(FriendRequest).filter(FriendRequest.id == request_id).first()
+    if not friend_request:
+        raise HTTPException(status_code=404, detail="friend request not found")
+    if friend_request.recipient_id != current_user.id:
+        raise HTTPException(status_code =403, detail="wrong user to decline ")
+    if friend_request.status != "pending":
+        raise HTTPException(status_code= 400, detail="request not pending")
+    friend_request.status = "declined"
+    db.commit()
+    db.refresh(friend_request)
+    return friend_request

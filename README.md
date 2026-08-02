@@ -4,7 +4,15 @@ A social coordination app: see when your friends are free, and get invited to (o
 
 ## Why this exists
 
-Organizing hangouts usually means a group chat, everyone slowly replying with availability, and someone eventually giving up and picking a time. Circle flips that: you broadcast when you're free, your friends see it, and outing requests happen directly.
+Organizing hangouts usually means a group chat, everyone slowly replying with availability, and someone eventually giving up and picking a time. Circle flips that: mark yourself free, and if a friend's availability overlaps with yours, you both find out at the same time — no one-sided "I said I was free and nobody responded."
+
+## Roadmap / future ideas
+
+Deliberately out of scope for now, but the current design keeps room for them:
+
+- **Circles** — sub-groups of friends (close friends vs. wider circle), for finer-grained availability sharing.
+- **Location/venue presets** — attach preferred hangout spots to your availability or an outing proposal.
+- **Recurring availability** — "free every Sunday afternoon" instead of one-off windows.
 
 ## Stack
 

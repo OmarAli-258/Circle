@@ -133,3 +133,53 @@ Good observation caught independently: `@app.get("/health")` looks different fro
 **Verified for real, three cases:** no token → `403` (FastAPI's `HTTPBearer` default for missing credentials). Garbage/invalid token → `401` with the custom message. Real token from a live login → actual protected user data returned via `GET /me`.
 
 This completes all of auth's infrastructure. Next: the Week 2 design conversation (friend graph, availability, outing requests) before writing any of that code.
+
+### Week 2 design conversation
+
+**Friend model:** one table (`friend_requests`: `requester_id`, `recipient_id`, `status`, `created_at`), not separate "requests" and "friendships" tables — a friendship is just this one relationship changing state over time. Checking "are these two people friends" has to check both directions (`requester_id`/`recipient_id` could be either way round), since the row only remembers who originally sent it.
+
+**Availability model:** one row per time window (`user_id`, `start_time`, `end_time`) — one-off only for now, no recurring patterns (deferred, but not a dead end: recurring could later just be a background job creating ordinary one-off rows on schedule). Timezone-aware UTC, same reasoning as `created_at`.
+
+**Real product-design conversation, not just schema:** identified a genuine flaw in the core concept — broadcasting "I'm free" openly is socially risky (visible rejection if nobody responds), and is a bigger problem for the exact users who'd benefit most (less socially-connected people, for whom "always available" can read as a low-status signal). Solution decided: **mutual reveal** — availability is never shown to anyone until at least one other friend also has overlapping availability; only then do both get notified simultaneously. Directly borrowed from how dating apps solve one-sided visible rejection (mutual match, not visible one-way "likes"). This is purely an application/notification-layer decision — doesn't change the availability schema above, so it doesn't block current work.
+
+**Deliberately out of scope for now, but kept in mind for how things are structured:** friend "circles"/sub-groups (close friends vs. wider circle), and location/venue presets attached to outings. Noted so visibility-checking logic gets kept as one isolated, named piece of code rather than scattered inline joins — cheap now, avoids a rewrite if circles get added later.
+
+### `FriendRequest` model — first table with foreign keys
+
+New concept: **foreign keys** — a column storing a reference to another table's row (`ForeignKey("users.id")`), which Postgres actively enforces (rejects inserts referencing a nonexistent user). Two real mistakes caught along the way: applying `unique=True`/`String(255)` to `requester_id` by copy-pasting from `email` without realizing a requester can legitimately appear many times across different requests (a real conceptual error, not just a typo), and `ForeignKey("user.id")` (singular) instead of `"users.id"` — foreign keys reference the actual table name, not the Python class name, same distinction as `__tablename__`.
+
+Migration generated and applied the same two-step way as before; this one's `down_revision` correctly chains to the previous migration instead of `None`, and the generated file contains real `ForeignKeyConstraint` entries — visible, concrete proof the Python-level `ForeignKey` became a real database-enforced constraint. Verified directly in Postgres (`\d friend_requests`): both foreign keys correctly reference `users(id)`.
+
+Next: the actual endpoints (send request, accept/decline, list friends).
+
+## 2026-08-02
+
+### Typed lists (practice/) — `list[SomeType]`
+
+New notation: `list[str]` means "a list where every item is a string." Honest caveat learned: in plain Python this is just a label for humans/tools, not enforced at runtime — the real enforcement comes from Pydantic (same distinction as `Mapped[type]` alone vs `mapped_column`/`BaseModel`). Directly motivated by "list my friends" needing to return `list[UserOut]` instead of one `UserOut`.
+
+### `POST /friend_requests` — first endpoint using `get_current_user` for real
+
+First endpoint where `current_user: User = Depends(get_current_user)` is used for actual business logic (not just the `/me` test) — the requester is always whoever's really logged in, never something the client can specify/fake.
+
+Real bugs, and a good lesson about consistency specifically: ended up with **three different spellings** of what should've been one field (`recipent_id`, `reciever_id`, `recivier_id`) spread across two schemas and the endpoint. None of it showed up as an import error — `FriendRequestCreate`/`FriendRequestOut` importing fine says nothing about whether their fields actually match each other or the real `FriendRequest` model's columns. Only actually calling the endpoint (a real signup → login → send-request flow via `curl`) would have surfaced it. Fixed by picking one canonical name (`recipient_id`, matching the real column) and making every reference consistent, rather than patching typos one at a time.
+
+**Verified for real:** created a second user (Bob), sent a real friend request from the original account, got back `{"requester_id":1,"recipient_id":2,"status":"pending",...}`, and confirmed self-friend-requests are correctly rejected.
+
+Next: accept/decline endpoints, then listing friends (`list[UserOut]`).
+
+### `POST /friend_requests/{id}/accept` — path parameters + updating existing rows
+
+Two new concepts: **path parameters** (`{request_id}` in the URL, matched to a function parameter of the same name — FastAPI extracts and converts it automatically), and **updating vs. creating** — `friend_request` came from `db.query(...).first()`, already tracked by the session, so changing `friend_request.status = "accepted"` and calling `db.commit()` is enough to trigger a real `UPDATE`; no `db.add()` needed (that's only for objects the session doesn't know about yet). Also introduced `403` (valid login, but not authorized for *this specific* action) as distinct from `401` (not authenticated at all).
+
+One real bug: a missing comma in `HTTPException(status_code=400 detail=...)` — Python's own error message named the fix directly (`SyntaxError: invalid syntax. Perhaps you forgot a comma?`).
+
+**Verified for real, three cases:** Bob accepting a pending request → status flips to `"accepted"`. The original requester trying to accept their own sent request → rejected with the `403`. Bob trying to accept the same request again → rejected with the `400` "not pending" check.
+
+### `POST /friend_requests/{id}/decline`
+
+Copy of `accept`'s shape with `"declined"` instead. Real bug caught: pasted the new endpoint but named the function `accept_friend_request` again — an exact duplicate name of the earlier function. Worth understanding precisely why this wasn't a crash: Python just silently rebinds the name to point at the second function, discarding the reference to the first — but since FastAPI's routing captures each function *at decoration time* (immediately, per the decorator lesson), both `/accept` and `/decline` likely still routed correctly to their own separate functions regardless. Still fixed by renaming to `decline_friend_request`, since the collision is genuinely confusing to read and would show up wrong in FastAPI's auto-generated `/docs`.
+
+**Verified for real:** signed up a third user (Carol), sent her a request, declined it as Carol, confirmed `status: "declined"` in the real response.
+
+Next: `GET /friends` — list a user's actual friends, returning `list[UserOut]` (today's practice concept) instead of one object.
