@@ -24,4 +24,13 @@ class FriendRequestOut(BaseModel):
     status : str
     created_at : datetime
     model_config = {"from_attributes" : True }
-    
+class AvailabilityCreate(BaseModel):
+    start_time : datetime
+    end_time : datetime
+class AvailabilityOut(BaseModel): 
+    id : int
+    user_id : int
+    start_time : datetime
+    end_time : datetime
+    created_at : datetime
+    model_config = {"from_attributes" : True}

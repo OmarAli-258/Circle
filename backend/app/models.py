@@ -16,3 +16,10 @@ class FriendRequest(Base):
     recipient_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
     status : Mapped[str] = mapped_column(String(20),default="pending")
     created_at : Mapped[datetime] = mapped_column(default = lambda: datetime.now(timezone.utc))
+class Availability(Base):
+    __tablename__= "availability"
+    id : Mapped[int] = mapped_column(primary_key=True)
+    user_id : Mapped[int] = mapped_column(ForeignKey("users.id"))
+    start_time : Mapped[datetime] = mapped_column()
+    end_time : Mapped[datetime] = mapped_column()
+    created_at : Mapped[datetime] = mapped_column(default= lambda: datetime.now(timezone.utc))

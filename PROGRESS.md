@@ -201,3 +201,37 @@ Real bugs: `User.id in_ (friend_ids)` instead of `User.id.in_(friend_ids)` — `
 This completes the entire friend model: send, accept, decline, and list, all built and verified. Next: the availability model.
 
 Process note: starting next session, practice/ concepts will branch out to general job-relevant topics (testing, git workflows, data structures/algorithms) rather than only things strictly needed for this project.
+
+### `Availability` model — third table, no new concepts needed
+
+Same shape as `FriendRequest`: `id`, a foreign key (`user_id` → `users.id`), plain columns (`start_time`/`end_time`, no default — set explicitly each time), `created_at`. One real bug, a good retention check: wrote `ForeignKey("user_id")` instead of `ForeignKey("users.id")` — missed both the plural table name and the `.id` part. Migration generated and applied the same two-step way as before; verified directly in Postgres (`\d availability`) — real foreign key constraint pointing at `users(id)`.
+
+Next: schemas + a `POST /availability` endpoint to actually create a window, then the harder piece — the mutual-reveal matching query.
+
+### `POST /availability` — and the general "how to design a feature" checklist
+
+Before writing this one, worked out the general thought process behind every feature built so far, as a reusable checklist rather than a one-off recipe: (1) what data needs storing → the model, (2) what the client sends to create one → the Create schema (never auto-generated/server-determined fields), (3) what's safe to send back → the Out schema, (4) what actions exist on this data → one endpoint per action, (5) per endpoint: does it need `current_user`? `db`? input data? any business-rule checks before touching the database?
+
+Also clarified: FastAPI doesn't care about parameter *position* in an endpoint signature — it reads each parameter's *type hint* (a `BaseModel` → request body, `Depends(...)` → a dependency, a plain type matching `{path_param}` → from the URL). The reason body-schema parameters always end up listed first is a plain Python rule (parameters without a default can't follow ones that have one), not a FastAPI requirement.
+
+Endpoint itself reused every known pattern; one real bug (`status=404` instead of `status_code=400` — both the wrong keyword *and* the wrong code, since this is a validation failure, not a "not found").
+
+**Verified for real:** posted a real availability window (7-10pm), got back the full row; posting one with `end_time` before `start_time` correctly rejected.
+
+Next: the mutual-reveal matching query — the hardest piece of Week 2.
+
+### Overlap logic (practice/) — the hardest conceptual piece, solved and verified
+
+Good pushback mid-design: a technical overlap of a single minute isn't practically useful, so refined the plan to require a **minimum overlap duration** (30 minutes), not just "do these ranges touch at all." Clean way to compute it: `overlap_start = max(start_a, start_b)`, `overlap_end = min(end_a, end_b)`, `overlap_end - overlap_start` gives the actual overlap length directly — comparing that to `timedelta(minutes=30)` naturally handles the "no overlap at all" case too (produces a *negative* duration, which just fails the minimum check on its own, no special-casing needed).
+
+Also settled: input time granularity (should users be forced to pick times in clean 15/30-min steps?) is a **frontend** concern for Week 3, not something that changes the backend math — datetime subtraction doesn't care what granularity the values came from.
+
+**Verified for real:** wrote `overlaps()` standalone, tested against a 15-minute (too-short) overlap and a real 1-hour overlap — both matched expectations exactly.
+
+Next: apply this same logic to real availability rows pulled from the database, across a user and their friends.
+
+### Extracted `app/utils.py` — real DRY moment
+
+Good catch mid-session: `list_friends` and the new matching endpoint both needed the exact same "find accepted friend ids" logic — instead of duplicating it a second time, pulled it into a shared `get_friend_ids(user_id, db)` helper in a new `app/utils.py`, alongside the verified `overlaps()` function (moved there from `practice/`). Both endpoints now call the one shared function. Also discussed why there's no stored "friends list" column on `User` directly — same principle as not storing a redundant "confirmed" flag on outings: never store something derivable from a source of truth in a second place, since the two can drift out of sync.
+
+**Stopping point (unfinished, picking up next session):** `get_availability_matches` in `main.py` has its `friend_ids` line but still needs: fetching `my_windows`/`friend_windows`, the nested loop comparing every pair using `overlaps()`, and the final query turning matched ids into real `User` records. Explained in full, not yet written or tested.

@@ -1,7 +1,8 @@
 from fastapi import Depends, FastAPI, HTTPException
-from app.models import User, FriendRequest
-from app.schemas import UserCreate, UserOut, UserLogin, Token , FriendRequestOut,FriendRequestCreate
+from app.models import User, FriendRequest, Availability
+from app.schemas import UserCreate, UserOut, UserLogin, Token , FriendRequestOut,FriendRequestCreate, AvailabilityCreate, AvailabilityOut
 from app.security import hash_password, verify_password, create_access_token, get_current_user
+from app.utils import get_friend_ids, overlaps
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -88,8 +89,22 @@ def decline_friend_request(request_id: int, current_user : User = Depends(get_cu
     return friend_request
 @app.get("/friends",response_model=list[UserOut])
 def list_friends(current_user : User = Depends(get_current_user),db : Session = Depends(get_db)):
-    accepted_friends= db.query(FriendRequest).filter((FriendRequest.recipient_id == current_user.id) | (FriendRequest.requester_id == current_user.id) , 
-                                                    FriendRequest.status =="accepted").all()
-    friend_ids=[req.recipient_id if current_user.id == req.requester_id else req.requester_id for req in accepted_friends]
+    friend_ids = get_friend_ids(current_user.id, db)
     friends=db.query(User).filter(User.id.in_(friend_ids)).all()
-    return friends 
+    return friends
+
+@app.post("/availability", response_model=AvailabilityOut)
+def create_availability(availability_data: AvailabilityCreate, current_user: User = Depends(get_current_user),
+                        db: Session = Depends(get_db)):
+    if availability_data.end_time <= availability_data.start_time:
+        raise HTTPException(status_code=400, detail="end time must be after start")
+    new_availability = Availability(user_id=current_user.id, start_time=availability_data.start_time,
+                                    end_time=availability_data.end_time)
+    db.add(new_availability)
+    db.commit()
+    db.refresh(new_availability)
+    return new_availability
+
+@app.get("/availability/matches", response_model=list[UserOut])
+def get_availability_matches(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+     friend_ids = get_friend_ids(current_user.id, db)
