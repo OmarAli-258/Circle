@@ -86,3 +86,10 @@ def decline_friend_request(request_id: int, current_user : User = Depends(get_cu
     db.commit()
     db.refresh(friend_request)
     return friend_request
+@app.get("/friends",response_model=list[UserOut])
+def list_friends(current_user : User = Depends(get_current_user),db : Session = Depends(get_db)):
+    accepted_friends= db.query(FriendRequest).filter((FriendRequest.recipient_id == current_user.id) | (FriendRequest.requester_id == current_user.id) , 
+                                                    FriendRequest.status =="accepted").all()
+    friend_ids=[req.recipient_id if current_user.id == req.requester_id else req.requester_id for req in accepted_friends]
+    friends=db.query(User).filter(User.id.in_(friend_ids)).all()
+    return friends 

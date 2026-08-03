@@ -183,3 +183,21 @@ Copy of `accept`'s shape with `"declined"` instead. Real bug caught: pasted the 
 **Verified for real:** signed up a third user (Carol), sent her a request, declined it as Carol, confirmed `status: "declined"` in the real response.
 
 Next: `GET /friends` — list a user's actual friends, returning `list[UserOut]` (today's practice concept) instead of one object.
+
+## 2026-08-03
+
+### List comprehensions (practice/) — already partly known
+
+Basic form (`[n * 2 for n in numbers]` as shorthand for a `for` loop that builds a new list) was already familiar. New part: the conditional-expression variant, `X if condition else Y`, usable inside a comprehension — e.g. `[req.recipient_id if req.requester_id == current_user.id else req.requester_id for req in accepted_requests]`, which is exactly the "who's the other person" loop from `list_friends`, compressed to one expression. `if`/`else` here produces a value directly, unlike a normal `if`/`else` statement running separate code blocks.
+
+### `GET /friends` — friend model fully complete
+
+Needed a full second pass on the explanation (first attempt yesterday didn't land) — this time explained in the actual order the code should be read (function signature first, then body), which was the real source of confusion, not the SQL logic itself. Also cleared up a mixup between a loop variable (`req`, one item at a time) and the full list it iterates over (`accepted_requests`).
+
+Real bugs: `User.id in_ (friend_ids)` instead of `User.id.in_(friend_ids)` — `.in_()` is a method, needs the dot, no space before its parentheses (same category as any other method call like `.first()`/`.all()`). Also `List[UserOut]` (capital, unimported `typing.List`) instead of `list[UserOut]` (the modern built-in style already used elsewhere).
+
+**Verified for real, both directions:** `test@example.com` (the original requester) sees exactly Bob (the one accepted friend), correctly excluding Carol (declined). Bob — who was the *recipient*, not the requester — also correctly sees `test@example.com` back, confirming the bidirectional OR query works from either side.
+
+This completes the entire friend model: send, accept, decline, and list, all built and verified. Next: the availability model.
+
+Process note: starting next session, practice/ concepts will branch out to general job-relevant topics (testing, git workflows, data structures/algorithms) rather than only things strictly needed for this project.
