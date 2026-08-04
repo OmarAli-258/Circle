@@ -107,4 +107,14 @@ def create_availability(availability_data: AvailabilityCreate, current_user: Use
 
 @app.get("/availability/matches", response_model=list[UserOut])
 def get_availability_matches(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-     friend_ids = get_friend_ids(current_user.id, db)
+    friend_ids = get_friend_ids(current_user.id, db)
+    my_windows= db.query(Availability).filter(Availability.user_id == current_user.id).all()
+    friend_windows= db.query(Availability).filter(Availability.user_id.in_(friend_ids)).all()
+    matched_user_ids=[]
+    for my_window in my_windows:
+        for friend_window in friend_windows:
+            if overlaps(my_window.start_time,friend_window.start_time,my_window.end_time,friend_window.end_time):
+                if friend_window.user_id not in matched_user_ids:
+                    matched_user_ids.append(friend_window.user_id)
+    matches= db.query(User).filter(User.id.in_(matched_user_ids)).all()
+    return matches

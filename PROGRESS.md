@@ -235,3 +235,13 @@ Next: apply this same logic to real availability rows pulled from the database, 
 Good catch mid-session: `list_friends` and the new matching endpoint both needed the exact same "find accepted friend ids" logic — instead of duplicating it a second time, pulled it into a shared `get_friend_ids(user_id, db)` helper in a new `app/utils.py`, alongside the verified `overlaps()` function (moved there from `practice/`). Both endpoints now call the one shared function. Also discussed why there's no stored "friends list" column on `User` directly — same principle as not storing a redundant "confirmed" flag on outings: never store something derivable from a source of truth in a second place, since the two can drift out of sync.
 
 **Stopping point (unfinished, picking up next session):** `get_availability_matches` in `main.py` has its `friend_ids` line but still needs: fetching `my_windows`/`friend_windows`, the nested loop comparing every pair using `overlaps()`, and the final query turning matched ids into real `User` records. Explained in full, not yet written or tested.
+
+## 2026-08-04
+
+### `GET /availability/matches` — finished, and the biggest real bug yet
+
+Real production-grade error caught via actual testing, not just review: `Availability.user_id == Availability.user_id.in_(friend_ids)` — comparing a column to the *result* of an `.in_()` check (which is itself a true/false condition) instead of just using `.in_()` as the entire filter on its own. This didn't surface as a Python error at all — it passed import cleanly, and only broke when Postgres itself rejected the generated SQL: `operator does not exist: integer = boolean`, with the actual bad SQL shown directly (`WHERE availability.user_id = (availability.user_id IN (...))`). A good reminder that some bugs only show up as a *database* error, one layer past even a Python call-time error — checked via `docker compose logs backend` for the real traceback, since the client only ever sees a generic "Internal Server Error".
+
+**Verified for real, the actual point of the whole feature:** `test@example.com` (free 7-10pm) and Bob (free 8-11pm, added specifically to create a 2-hour overlap) — calling `/availability/matches` as `test@example.com` correctly returns Bob. This is the first genuinely "smart" feature in the project — not just storing what a user typed, but computing something real across two people's data.
+
+This completes Week 2's core domain entirely: friend model, availability model, and the mutual-reveal matching logic, all built and verified.
