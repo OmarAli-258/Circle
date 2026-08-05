@@ -245,3 +245,53 @@ Real production-grade error caught via actual testing, not just review: `Availab
 **Verified for real, the actual point of the whole feature:** `test@example.com` (free 7-10pm) and Bob (free 8-11pm, added specifically to create a 2-hour overlap) — calling `/availability/matches` as `test@example.com` correctly returns Bob. This is the first genuinely "smart" feature in the project — not just storing what a user typed, but computing something real across two people's data.
 
 This completes Week 2's core domain entirely: friend model, availability model, and the mutual-reveal matching logic, all built and verified.
+
+### Frontend kickoff — Node.js, Vite, and CORS
+
+Deliberate scope decision: dip into frontend now with just signup/login (see it actually work end-to-end), then return to finish the backend (outings) afterward — rather than committing to the full dashboard right away. Also decided to learn plain React (JavaScript) first, adding TypeScript as its own separate later step, rather than both at once — same "one new thing at a time" lesson as everywhere else.
+
+**Node.js** — explained as "Python's interpreter, but for JavaScript": lets JS run outside a browser, needed for build tools like Vite. **npm** is the same role as `pip`.
+
+Scaffolded a new React project with Vite (`frontend/`, plain JS template) and installed dependencies. **CORS** explained: browsers block a page loaded from one origin (protocol+domain+port) from calling a different origin by default — our frontend (`:5173`) and backend (`:8000`) count as different origins even on the same machine — so the backend needed `CORSMiddleware` added explicitly allowing `http://localhost:5173`.
+
+**Verified for real:** started the Vite dev server, confirmed the default React starter page actually renders in the browser.
+
+Next: learn components/JSX, then build the real signup page.
+
+### First real component — signup form markup (no logic yet)
+
+Recalibrated mid-lesson: JS fundamentals are genuinely bare, not "mid" as originally assumed — same kind of recalibration as "Year 1 CS, not comfortable-with-basics" back in Week 1. Approach adjusted accordingly: small concrete steps, worked example → own version, same rhythm as the backend rather than more upfront explanation.
+
+Core ideas covered: a component is a JavaScript function returning JSX (HTML-like markup embedded in JS, not the reverse); `{}` inside JSX drops back into real JavaScript values; `const [a, b] = something` is array destructuring (same idea as Python's `a, b = 1, 2`, just JS's version) — flagged as the likely actual sticking point rather than React itself.
+
+Replaced the full Vite starter template with a minimal one-line component first, specifically to prove the edit-save-see-it-change loop (Vite's "HMR") before building anything real — same instinct as the backend's original `/health` check.
+
+**Verified for real in the browser:** a working signup form — email input, password input, submit button — actually rendered, via `read_page` rather than just trusting the code.
+
+Next: make the form actually do something — state to track typed input, then a real `fetch` call to `POST /signup`.
+
+### Signup form fully working — first real full-stack frontend feature
+
+Learned `useState` and controlled inputs (`value={x}` + `onChange={(e) => setX(e.target.value)}`) — clarified that `setX` only updates stored state, the input re-displaying is a *side effect* of that via `value={x}`, not `setX` touching the input directly. Also unpacked the event object `e`: browser-generated, describes what just happened; `e.target` is the actual element; `e.target.value` is its current text.
+
+Found and worked around a real tooling limitation, not a code bug: the browser automation's simulated typing didn't register in this environment (confirmed by testing on a completely plain, logic-free input too) — real typing in an actual browser worked fine, a good reminder that automated verification has limits and manual testing is sometimes the more reliable check.
+
+Explicit division-of-labor shift for frontend: Claude writes a larger share of the code directly going forward (frontend from scratch would take too long otherwise), while still pausing to explain new concepts and hand over practice-worthy pieces — different balance than the backend's "user writes domain code" default.
+
+New concepts from the completed signup form: `async`/`await` (handling something that takes time without freezing the page), `e.preventDefault()` (stopping a form's default full-page-reload behavior), `fetch` (JS's built-in HTTP client — same role as `curl`/`requests`), `JSON.stringify`/`response.json()` (JS object ↔ JSON text, both directions), and `{condition && <jsx/>}` as a common "only render this if true" pattern.
+
+**Verified for real, manually in a real browser (not automation):** filled in the signup form, submitted, got back a real confirmation message from the actual backend.
+
+### Login page — division of labor corrected, and fully working
+
+Course-corrected the frontend approach: the signup form was written entirely by Claude, which didn't match what the user actually wanted (write it themselves, with real explanation, same rhythm as the backend). Reset to: Claude writes true boilerplate/CSS only, user writes all interactive logic themselves — restored close to the original backend division rather than the overcorrection from the signup form.
+
+Practiced `localStorage` (`setItem`/`getItem`) in isolation first — persists data across page reloads, unlike a `useState` variable which resets. Motivation: needed somewhere to actually keep the JWT after logging in.
+
+Built `handleLogin` and its form through many real rounds of debugging — genuinely hard-won this time, not handed over: a misplaced closing brace that silently moved code *outside* the function (a real lesson in what "scope" means — `response` didn't exist once outside its own function's braces), `e.preventDefault` missing its call parentheses, `localStorage.setItem(token, ...)` using an undefined variable instead of a plain string key, a real `SyntaxError` from one extra closing parenthesis (caught via actual Vite error output, not review), and a harmless-but-sloppy trailing space inside `type="submit "`.
+
+Also did a full, slow, line-by-line trace of `const response = await fetch(...)` — what a Promise is (a "claim ticket" for a reply that isn't ready yet), why `fetch` alone can't return the real data immediately, and what `await` actually does (pause until the real reply exists). This took several passes before landing, similar to decorators earlier in the project.
+
+**Verified for real, manually, by the user:** signed up, then logged in with the same credentials, and got back "valid token" — a complete, self-written, working login flow, JWT actually saved in the browser.
+
+This completes the "dip our toes in frontend" plan — signup and login both fully working. Next: either back to the backend (outings/requests), or continue the frontend (routing between pages, a real dashboard).

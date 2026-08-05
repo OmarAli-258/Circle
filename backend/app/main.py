@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from app.models import User, FriendRequest, Availability
 from app.schemas import UserCreate, UserOut, UserLogin, Token , FriendRequestOut,FriendRequestCreate, AvailabilityCreate, AvailabilityOut
 from app.security import hash_password, verify_password, create_access_token, get_current_user
@@ -8,6 +9,14 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 
 app = FastAPI(title="Circle API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
