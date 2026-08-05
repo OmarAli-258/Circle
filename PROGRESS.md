@@ -295,3 +295,17 @@ Also did a full, slow, line-by-line trace of `const response = await fetch(...)`
 **Verified for real, manually, by the user:** signed up, then logged in with the same credentials, and got back "valid token" — a complete, self-written, working login flow, JWT actually saved in the browser.
 
 This completes the "dip our toes in frontend" plan — signup and login both fully working. Next: either back to the backend (outings/requests), or continue the frontend (routing between pages, a real dashboard).
+
+## 2026-08-05
+
+### Outings — decided to defer CSS, back to finishing Week 2's last backend piece
+
+Discussed when to do styling: agreed to defer it until more pages exist, so one cohesive design pass happens across the whole app rather than restyling piecemeal as each new page gets built.
+
+Built `Outing` and `OutingInvite` models — first table with a genuinely **nullable** column (`cancellation_message`, `responded_at`): needs `Mapped[Optional[str]]` (not just `Mapped[str]`) plus `nullable=True`, and requires `from typing import Optional`. Real bugs, mostly repeats of earlier lessons (good retention check): `nullable` used as a bare undefined name instead of `nullable=True`; `default="unkown"` both misspelled and semantically wrong (should default to `"open"`, matching the actual designed states); `__tablenames__` (extra "s") on the second table — the exact same "must be spelled exactly" trap from the very first model; `ForeignKey(outings.id)`/`ForeignKey(users.id)` missing quotes entirely, same category of mistake as `Availability.user_id`'s foreign key earlier.
+
+`OutingInvite` is the first table with two foreign keys pointing at **two different tables** (`outings` and `users`), rather than the same table twice like `FriendRequest` did.
+
+**Verified for real:** migration generated and applied, both tables confirmed directly in Postgres with correct foreign keys in both directions (`outing_invites` shows up under `outings`' "Referenced by").
+
+Next: schemas, then the `POST /outings` endpoint — which introduces a new pattern, creating *one* outing plus *several* invite rows in a single request.
