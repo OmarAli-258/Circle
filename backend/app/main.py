@@ -1,7 +1,8 @@
+from datetime import datetime, timezone
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.models import User, FriendRequest, Availability, Outing, OutingInvite
-from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut, FriendRequestCreate, AvailabilityCreate, AvailabilityOut, OutingCreate, OutingOut
+from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut, FriendRequestCreate, AvailabilityCreate, AvailabilityOut, OutingCreate, OutingOut,OutingInviteOut
 from app.security import hash_password, verify_password, create_access_token, get_current_user
 from app.utils import get_friend_ids, overlaps
 from sqlalchemy import text
@@ -148,3 +149,33 @@ def create_outings(outing_data : OutingCreate, current_user : User = Depends(get
         db.add(invite)
     db.commit()
     return new_outing  
+
+@app.post("/outing_invites/{invite_id}/accept", response_model=OutingInviteOut)
+def accept_outing_invite(invite_id : int ,current_user : User = Depends(get_current_user) , db : Session = Depends(get_db)):
+    outinginvite = db.query(OutingInvite).filter(OutingInvite.id == invite_id).first()
+    if not outinginvite:
+        raise HTTPException(status_code=404, detail="no invitation found")
+    if outinginvite.invitee_id != current_user.id:
+        raise HTTPException(status_code=403, detail= "user is not invitee")
+    if outinginvite.status != "pending":
+        raise HTTPException(status_code=400, detail= "already responded to")
+    outinginvite.status="accepted"
+    outinginvite.responded_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(outinginvite)
+    return outinginvite
+
+@app.post("/outing_invites/{invite_id}/decline",response_model=OutingInviteOut)
+def decline_outing_invite(invite_id : int ,current_user : User = Depends(get_current_user) , db : Session = Depends(get_db)):
+    outinginvite = db.query(OutingInvite).filter(OutingInvite.id == invite_id).first()
+    if not outinginvite:
+        raise HTTPException(status_code=404, detail="no invitation found")
+    if outinginvite.invitee_id != current_user.id:
+        raise HTTPException(status_code=403, detail= "user is not invitee")
+    if outinginvite.status != "pending":
+        raise HTTPException(status_code=400, detail= "already responded to")
+    outinginvite.status="declined"
+    outinginvite.responded_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(outinginvite)
+    return outinginvite

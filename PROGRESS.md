@@ -331,3 +331,15 @@ Also fixed in passing: the CORS middleware block had been accidentally deleted f
 **Verified for real:** created a real outing with `test@example.com` inviting Bob, confirmed both the outing and a correctly-linked `outing_invites` row (`outing_id`/`invitee_id` matching) directly in Postgres. Confirmed inviting a non-friend (Carol, whose request was declined) is correctly rejected.
 
 This completes outing creation — the core of Week 2's outings feature. Still ahead: accept/decline for outing invites, and cancelling an outing.
+
+### `POST /outing_invites/{id}/accept` and `/decline`
+
+Built almost entirely independently this time, directly mirroring `accept_friend_request`/`decline_friend_request` — right structure, right order of checks on the first real attempt, after one genuine conceptual correction: the first draft tried to build a *new* `OutingInvite(status="accepted")` instead of fetching and updating the *existing* one — the same "update vs. create" distinction from the very first accept endpoint, resurfacing as a real mistake rather than just remembered trivia, which is a more honest test of whether it actually stuck.
+
+Also caught, self-flagged: a URL path (`{outings_invite}`) that didn't match its function's actual parameter name (`invite_id`) — reinforced that FastAPI links path parameters by exact name, not position or vibes.
+
+Real bug, and a good live proof of the import-time vs. call-time lesson: `datetime`/`timezone` were never imported in `main.py`, but `import app.main` succeeded anyway, since `datetime.now(timezone.utc)` sits inside a function body, not a type hint — only evaluated when the function actually runs. Confirmed by actually calling the endpoint and getting a real `NameError` from the server logs, then fixing the import.
+
+**Verified for real, three cases:** Bob accepting a real invite (status flips, real `responded_at` timestamp); accepting the same invite again correctly rejected as already-responded; a second outing/invite created and successfully declined.
+
+Outings feature is now functionally complete for the MVP scope: create, accept, decline. Cancelling (with the optional message) is the last piece, if wanted, otherwise ready to return to the frontend.

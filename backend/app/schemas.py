@@ -50,3 +50,10 @@ class OutingOut(BaseModel):
     cancellation_message : Optional[str]
     created_at : datetime
     model_config = {"from_attributes": True}
+class OutingInviteOut(BaseModel):
+    id : int
+    outing_id : int
+    invitee_id : int
+    status : str
+    responded_at: Optional[datetime]
+    model_config= {"from_attributes":True }
