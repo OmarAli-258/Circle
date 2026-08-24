@@ -309,3 +309,25 @@ Built `Outing` and `OutingInvite` models — first table with a genuinely **null
 **Verified for real:** migration generated and applied, both tables confirmed directly in Postgres with correct foreign keys in both directions (`outing_invites` shows up under `outings`' "Referenced by").
 
 Next: schemas, then the `POST /outings` endpoint — which introduces a new pattern, creating *one* outing plus *several* invite rows in a single request.
+
+## 2026-08-24 (back after a two-week break)
+
+Environment came back up cleanly after three weeks stopped (Docker restarted fine, `/health`/`/health/db` both still passed). Did a compact review pass over the whole stack (models, migrations, hashing, schemas, DI, JWT, decorators, React basics) rather than a full deep re-teach — some things had faded a bit, judged acceptable to let resurface naturally while continuing rather than re-teaching everything up front.
+
+### `OutingCreate`/`OutingOut` schemas
+
+Real bug caught: `cancellation_message: str` in `OutingOut` — needed to be `Optional[str]`, mirroring the model's own nullable column (most outings aren't cancelled, so this field is usually `None`; a non-optional schema field would fail validation on every uncancelled outing). Also cleared up *why* `model_config = {"from_attributes": True}` belongs only on `OutingOut` and not `OutingCreate`, by tracing exactly how each gets constructed in real code: `OutingCreate` is built by FastAPI from raw incoming JSON (a dict), `OutingOut` is built from a real `Outing` database object via `response_model` (needs dot-attribute access).
+
+### `POST /outings` — two-stage save, and a real division-of-labor correction mid-session
+
+User caught Claude reverting to "here's the code" instead of "here's the reason, then the pieces that lead to it" — corrected explicitly and applied for the rest of the session. Settled rule going forward: genuine new-concept/logic mistakes stay the user's to work through; trivial typos (missing commas, misspellings of already-known syntax) Claude just points out and fixes directly, no need to burn a full debug cycle on those.
+
+Core new idea: `OutingInvite` rows need a real `outing_id` to reference, which doesn't exist until the `Outing` itself is saved — so this endpoint saves in two stages (create+commit+refresh the outing alone first, *then* loop to create invite rows using the now-real id), unlike every previous endpoint's single save. Needed a second, concrete pass (a real Alice/Bob/Carol example: one outing row, two invite rows sharing the same `outing_id`) before the abstract version actually landed.
+
+Real bugs, each explained with reasoning before the fix: `OutingInvite(outing_id=outing_data.id, ...)` — a genuine mix-up between `outing_data` (the client's original request, which never has an `id` at all) and `new_outing` (the real saved row, which does after `db.refresh`); committing/refreshing inside the invite loop instead of batching one `db.commit()` after it (not broken, just an unnecessary extra database round-trip per invitee); and a missing `return new_outing` entirely, which `response_model=OutingOut` needs something real to build from.
+
+Also fixed in passing: the CORS middleware block had been accidentally deleted from `main.py` at some point — restored directly, along with catching that `Outing`/`OutingInvite`/`OutingCreate`/`OutingOut` were being used but never actually imported.
+
+**Verified for real:** created a real outing with `test@example.com` inviting Bob, confirmed both the outing and a correctly-linked `outing_invites` row (`outing_id`/`invitee_id` matching) directly in Postgres. Confirmed inviting a non-friend (Carol, whose request was declined) is correctly rejected.
+
+This completes outing creation — the core of Week 2's outings feature. Still ahead: accept/decline for outing invites, and cancelling an outing.

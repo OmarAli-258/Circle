@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
+from typing import Optional
 
 class UserCreate(BaseModel): 
     email: str
@@ -34,3 +35,18 @@ class AvailabilityOut(BaseModel):
     end_time : datetime
     created_at : datetime
     model_config = {"from_attributes" : True}
+class OutingCreate(BaseModel):
+    title : str
+    proposed_time : datetime
+    location : str 
+    invitee_ids : list[int] 
+class OutingOut(BaseModel):
+    id : int 
+    creator_id : int
+    title : str
+    proposed_time : datetime
+    location : str
+    status : str
+    cancellation_message : Optional[str]
+    created_at : datetime
+    model_config = {"from_attributes": True}

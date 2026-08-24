@@ -1,7 +1,7 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.models import User, FriendRequest, Availability
-from app.schemas import UserCreate, UserOut, UserLogin, Token , FriendRequestOut,FriendRequestCreate, AvailabilityCreate, AvailabilityOut
+from app.models import User, FriendRequest, Availability, Outing, OutingInvite
+from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut, FriendRequestCreate, AvailabilityCreate, AvailabilityOut, OutingCreate, OutingOut
 from app.security import hash_password, verify_password, create_access_token, get_current_user
 from app.utils import get_friend_ids, overlaps
 from sqlalchemy import text
@@ -17,7 +17,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @app.get("/health")
 def health():
@@ -127,3 +126,25 @@ def get_availability_matches(current_user: User = Depends(get_current_user), db:
                     matched_user_ids.append(friend_window.user_id)
     matches= db.query(User).filter(User.id.in_(matched_user_ids)).all()
     return matches
+
+@app.post("/outings",response_model=OutingOut)
+def create_outings(outing_data : OutingCreate, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    friend_ids = get_friend_ids(current_user.id, db)
+    for invitee_id in outing_data.invitee_ids:
+        if invitee_id not in friend_ids:
+            raise HTTPException(status_code=400, detail="invitee is not a friend")
+    new_outing = Outing(
+        creator_id = current_user.id,
+        title = outing_data.title,
+        proposed_time = outing_data.proposed_time,
+        location= outing_data.location,
+        status = "open"
+    )
+    db.add(new_outing)
+    db.commit()
+    db.refresh(new_outing)
+    for invitee_id in outing_data.invitee_ids:
+        invite = OutingInvite(outing_id=new_outing.id, invitee_id=invitee_id, status= "pending")
+        db.add(invite)
+    db.commit()
+    return new_outing  
