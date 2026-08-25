@@ -367,3 +367,13 @@ Also explained fully from scratch (per explicit request to stop leaning on "same
 **Verified for real:** got a real token via `curl` login, injected it into the browser's `localStorage` directly (since simulated typing doesn't register in this environment), loaded `/dashboard`, and it actually fetched `/me` automatically and rendered "Logged in as test@example.com" — real, automatic, token-authenticated data on screen for the first time.
 
 Next: build out the rest of the dashboard — friends, availability, matches, outings — reusing this same fetch-with-token pattern repeatedly.
+
+### Friends list on the dashboard — second rep of the fetch pattern, plus rendering a list for the first time
+
+Real bugs while adapting `fetchUser`'s pattern to `displayFriends`: reflexively tried `localStorage.getItem("friends")` — a genuine mixup between two different storage mechanisms (the `useState` memory slot being built in the same breath, vs. `localStorage`, the separate persistent browser storage the token — and only the token — actually lives in). Also: forgot to call `displayFriends()` at all at first, then placed the call *inside* the function's own body (accidental infinite self-recursion) before landing it outside, mirroring `fetchUser`/`fetchUser()` exactly. Also missed the `[]` second argument on the second `useEffect` — properly explained this time: without it, an effect reruns after every re-render, and since fetching triggers a re-render, that's a real infinite-fetch-loop risk, not just a style nit.
+
+New rendering concept: `.map()` to turn an array of data into an array of JSX elements — `{friends.map(friend => <p key={friend.id}>{friend.email}</p>)}` — same idea as a list comprehension on the backend, JS's version. `key` is required on each item so React can tell list items apart when the list changes.
+
+Debugging note: chased a phantom `useEffect` console warning and repeated 401s that turned out to be pure stale history accumulated in one long-lived browser tab across many server restarts and edits — resolved by testing in a genuinely fresh tab, which showed zero errors. Good reminder that a console's accumulated history isn't the same as its current state.
+
+**Verified for real:** real friends list rendered on the dashboard — `bob@example.com`, `test@example.com`'s one actual accepted friend, fetched live and displayed via `.map()`.
