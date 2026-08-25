@@ -343,3 +343,27 @@ Real bug, and a good live proof of the import-time vs. call-time lesson: `dateti
 **Verified for real, three cases:** Bob accepting a real invite (status flips, real `responded_at` timestamp); accepting the same invite again correctly rejected as already-responded; a second outing/invite created and successfully declined.
 
 Outings feature is now functionally complete for the MVP scope: create, accept, decline. Cancelling (with the optional message) is the last piece, if wanted, otherwise ready to return to the frontend.
+
+## 2026-08-25
+
+### pytest (practice/) — first real automated tests
+
+Motivation: every verification so far has been manual (`curl`, checking Postgres by hand, reading logs) — doesn't scale, since changing anything later means remembering to re-check everything by hand again. Automated tests write the check once, as real code, rerunnable in seconds forever. Directly motivated by yesterday's honest CV assessment flagging "no tests" as a real gap.
+
+`assert` just checks something is `True`; if not, it raises an error right there. `pytest` runs every function named `test_...` and reports which `assert`s failed and what they expected vs. got. Installed `pytest` on host Python (separate from the Docker-based backend stack, since `practice/` files run standalone).
+
+Turned the already-manually-verified `overlaps()` function into two real tests — one confirming a real overlap is detected, one confirming a non-overlap is correctly rejected (a boundary-touching case, a legitimate variant of the originally-suggested "too short" case, not a mistake).
+
+**Verified for real:** `python -m pytest practice/2026-08-25_pytest_intro.py -v` → `collected 2 items`, both `PASSED`. First real exposure to pytest's actual output format, unmodified from what a real job would show.
+
+### Routing + the dashboard's first real feature — the token finally gets used
+
+Installed `react-router-dom`, split the single `App.jsx` into `pages/SignupPage.jsx`, `pages/LoginPage.jsx`, `pages/DashboardPage.jsx` — Claude's to set up directly (infrastructure), then explained fully: `BrowserRouter`/`Routes`/`Route` (URL → component), `Navigate` (redirect, used for `/` → `/login`), `Link` (navigate without a full reload), `useNavigate` (same idea, triggered from code — sends the user to `/dashboard` right after a successful login).
+
+Needed several full restarts on `useEffect`/`async` — genuinely felt like starting from zero on JS again despite prior reps, which is an honest, expected place to be this early in a second language/paradigm, not a regression. What eventually landed: `useEffect(() => {...}, [])` runs code automatically once, on page load, instead of only in response to a click; `async` permits a function to pause, `await` is where the pause actually happens (a real, useful correction from "async means wait till done" to "async permits it, await is where it happens"). Also corrected a real mixup: the JWT comes from `localStorage` (separate, persistent browser storage from an earlier page), not from the `useState` memory slot being built in the same breath — two genuinely different storage mechanisms getting conflated.
+
+Also explained fully from scratch (per explicit request to stop leaning on "same as before" for frontend): `currentUser && <p>...</p>` — `&&` short-circuits to its left side when that's `null`/falsy, so nothing renders until real data exists; the moment `setCurrentUser` fills it in, the right side renders instead.
+
+**Verified for real:** got a real token via `curl` login, injected it into the browser's `localStorage` directly (since simulated typing doesn't register in this environment), loaded `/dashboard`, and it actually fetched `/me` automatically and rendered "Logged in as test@example.com" — real, automatic, token-authenticated data on screen for the first time.
+
+Next: build out the rest of the dashboard — friends, availability, matches, outings — reusing this same fetch-with-token pattern repeatedly.

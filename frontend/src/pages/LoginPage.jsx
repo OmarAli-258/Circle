@@ -1,0 +1,40 @@
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+
+function LoginPage() {
+  const [loginEmail, setLoginEmail] = useState("")
+  const [loginPassword, setLoginPassword] = useState("")
+  const [message, setMessage] = useState("")
+  const navigate = useNavigate()
+
+  async function handleLogin(e) {
+    e.preventDefault()
+    const response = await fetch("http://localhost:8000/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+    })
+    const data = await response.json()
+    if (response.ok) {
+      localStorage.setItem("token", data.access_token)
+      navigate("/dashboard")
+    } else {
+      setMessage(data.detail)
+    }
+  }
+
+  return (
+    <div>
+      <h2>Circle</h2>
+      <form onSubmit={handleLogin}>
+        <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="Email" />
+        <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Password" />
+        <button type="submit">Log in</button>
+      </form>
+      {message && <p>{message}</p>}
+      <p><Link to="/signup">Need an account? Sign up</Link></p>
+    </div>
+  )
+}
+
+export default LoginPage
