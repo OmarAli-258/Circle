@@ -56,20 +56,27 @@ def read_current_user(current_user: User = Depends(get_current_user)):
 
 @app.post("/friend_requests", response_model=FriendRequestOut)
 def send_friend_request(request_data :FriendRequestCreate, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
-    if request_data.recipient_id == current_user.id:
+    recipient = db.query(User).filter(User.email == request_data.recipient_email).first()
+    if request_data.recipient_email == current_user.email:
         raise HTTPException(status_code= 400, detail="cannot send friend request to yourself")
-    recipient = db.query(User).filter(User.id == request_data.recipient_id).first()
     if not recipient:
         raise HTTPException(status_code=404, detail="user not found")
     new_request= FriendRequest(
         requester_id=current_user.id,
-        recipient_id=request_data.recipient_id,
+        recipient_id=recipient.id,
         status="pending",
     )
     db.add(new_request)
     db.commit()
     db.refresh(new_request)
-    return new_request
+    return FriendRequestOut(
+        id=new_request.id,
+        requester_id=new_request.requester_id,
+        requester_email=current_user.email,
+        recipient_id=new_request.recipient_id,
+        status=new_request.status,
+        created_at=new_request.created_at,
+    )
 @app.post("/friend_requests/{request_id}/accept", response_model=FriendRequestOut)
 def accept_friend_request(request_id: int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     friend_request=db.query(FriendRequest).filter(FriendRequest.id == request_id).first()
@@ -82,7 +89,15 @@ def accept_friend_request(request_id: int, current_user : User = Depends(get_cur
     friend_request.status = "accepted"
     db.commit()
     db.refresh(friend_request)
-    return friend_request
+    requester = db.query(User).filter(User.id == friend_request.requester_id).first()
+    return FriendRequestOut(
+        id=friend_request.id,
+        requester_id=friend_request.requester_id,
+        requester_email=requester.email,
+        recipient_id=friend_request.recipient_id,
+        status=friend_request.status,
+        created_at=friend_request.created_at,
+    )
 @app.post("/friend_requests/{request_id}/decline", response_model=FriendRequestOut)
 def decline_friend_request(request_id: int, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     friend_request=db.query(FriendRequest).filter(FriendRequest.id == request_id).first()
@@ -95,7 +110,15 @@ def decline_friend_request(request_id: int, current_user : User = Depends(get_cu
     friend_request.status = "declined"
     db.commit()
     db.refresh(friend_request)
-    return friend_request
+    requester = db.query(User).filter(User.id == friend_request.requester_id).first()
+    return FriendRequestOut(
+        id=friend_request.id,
+        requester_id=friend_request.requester_id,
+        requester_email=requester.email,
+        recipient_id=friend_request.recipient_id,
+        status=friend_request.status,
+        created_at=friend_request.created_at,
+    )
 @app.get("/friends",response_model=list[UserOut])
 def list_friends(current_user : User = Depends(get_current_user),db : Session = Depends(get_db)):
     friend_ids = get_friend_ids(current_user.id, db)
@@ -179,3 +202,19 @@ def decline_outing_invite(invite_id : int ,current_user : User = Depends(get_cur
     db.commit()
     db.refresh(outinginvite)
     return outinginvite
+@app.get("/friend_requests/pending",response_model=list[FriendRequestOut])
+def my_friend_requests(current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    recieved_requests=db.query(FriendRequest).filter(current_user.id== FriendRequest.recipient_id,
+                                                     FriendRequest.status== "pending").all()
+    result = []
+    for request in recieved_requests:
+        requester = db.query(User).filter(User.id == request.requester_id).first()
+        result.append(FriendRequestOut(
+            id=request.id,
+            requester_id=request.requester_id,
+            requester_email=requester.email,
+            recipient_id=request.recipient_id,
+            status=request.status,
+            created_at=request.created_at,
+        ))
+    return result

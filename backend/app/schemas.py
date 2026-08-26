@@ -17,10 +17,11 @@ class Token(BaseModel):
     access_token : str
     token_type : str = "bearer"
 class FriendRequestCreate(BaseModel):
-    recipient_id : int
+    recipient_email : str
 class FriendRequestOut(BaseModel):
     id : int
     requester_id : int
+    requester_email : str
     recipient_id : int
     status : str
     created_at : datetime

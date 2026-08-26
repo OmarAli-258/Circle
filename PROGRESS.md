@@ -377,3 +377,41 @@ New rendering concept: `.map()` to turn an array of data into an array of JSX el
 Debugging note: chased a phantom `useEffect` console warning and repeated 401s that turned out to be pure stale history accumulated in one long-lived browser tab across many server restarts and edits — resolved by testing in a genuinely fresh tab, which showed zero errors. Good reminder that a console's accumulated history isn't the same as its current state.
 
 **Verified for real:** real friends list rendered on the dashboard — `bob@example.com`, `test@example.com`'s one actual accepted friend, fetched live and displayed via `.map()`.
+
+## 2026-08-26
+
+### `onClick` (practice/) — the plain, non-form version of `onSubmit`
+
+Motivation: every fetch so far was triggered by submitting a form; a plain button (like an upcoming "Accept" or "Send request" button) needs the simpler, form-free version. Practiced in a standalone plain-HTML file (no React, no dev server) — `element.onclick = handleClick` is the non-React version of the same idea; no `preventDefault()` needed since there's no form's default reload behavior to stop.
+
+### `GET /friend_requests/pending` — new backend endpoint for the frontend's sake
+
+Real bugs, both caught before running: `response_model=[FriendRequestOut]` instead of `list[FriendRequestOut]` — the former is an actual Python list *containing the class*, not the `list[SomeType]` type-hint syntax from the typed-lists practice exercise; and a missing second filter condition (`status == "pending"`) — the first draft only checked the recipient, returning *every* request ever sent, accepted/declined included, not just ones still awaiting a response.
+
+**Verified for real:** signed up a new user (Dave), sent him a fresh request from `test@example.com`, and confirmed `GET /friend_requests/pending` (as Dave) correctly returns exactly that one pending request.
+
+Next: switch `send_friend_request` to accept an email instead of a raw `recipient_id` — better UX, since a real user wouldn't know another person's numeric id.
+
+### `send_friend_request` switched to email-based lookup
+
+Real bug, a repeat of the earlier `outing_data.id`/`new_outing.id` mixup: used `request_data.recipient_id` (a field that no longer exists on the request at all) instead of `recipient.id` (the real id of the user actually found by the email lookup). Also caught a schema/endpoint mismatch — the endpoint referenced `request_data.recipient_email`, but `FriendRequestCreate` still had the old `recipient_id: int` field; forgot to update the schema alongside the endpoint at first, then initially left the corrected field typed as `int` instead of `str`.
+
+Simplified the explanation after it landed as "convoluted" — restated as five plain steps (find the person → check two things can go wrong → stop on either → build with the real found id → save and return) rather than a caveated, reordering-focused explanation.
+
+**Verified for real:** sent a friend request by email (`dave@example.com`), confirmed the backend resolved it to the real `recipient_id: 5`. Confirmed the self-request guard still works using email comparison instead of id comparison — a different, equally valid way to write the same check.
+
+### `FriendRequestOut` gained `requester_email`
+
+The pending-requests dashboard section was rendering blank — `FriendRequest` only ever stored `requester_id` (a number), never an email, so there was nothing for the frontend to display. Added `requester_email: str` to the schema and, in every endpoint returning a `FriendRequestOut` (send, accept, decline, list-pending), built the response object manually with an extra `User` lookup instead of handing the ORM row straight to Pydantic — there's no SQLAlchemy `relationship()` wired up yet to do that join automatically.
+
+**Verified for real:** created two fresh test users, sent a request between them, and confirmed the JSON response actually included `requester_email` at every stage (send, list-pending, accept).
+
+### Accept button — first `onClick` with an argument in real code
+
+New concept: passing an argument into a click handler requires wrapping it in an arrow function — `onClick={() => handleAccept(friend_request.id)}` — since `onClick={handleAccept(friend_request.id)}` would call the function immediately at render time instead of waiting for a click. Also the first `POST` fetch (previous ones were all default `GET`), and a real case-sensitivity bug: wrote `onclick` (lowercase, valid in plain HTML) instead of JSX's `onClick`, which React silently ignores rather than erroring on.
+
+Also restructured `displayFriendsList` out of its `useEffect` into a standalone function, so `handleAccept` can call it again after a successful accept — this is what makes the accepted request disappear from the list immediately, without a manual page reload.
+
+**Verified for real:** created a fresh pending request between two test accounts, clicked Accept in the actual browser, confirmed `POST /friend_requests/{id}/accept` hit the backend (`docker compose logs`), confirmed the request left the database's pending list (fresh `curl` to `/friend_requests/pending` returned `[]`), and confirmed the UI removed it from screen with no reload.
+
+Next: `handleDecline` — same shape as `handleAccept`, swapping `/accept` for `/decline`.
