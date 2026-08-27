@@ -415,3 +415,25 @@ Also restructured `displayFriendsList` out of its `useEffect` into a standalone 
 **Verified for real:** created a fresh pending request between two test accounts, clicked Accept in the actual browser, confirmed `POST /friend_requests/{id}/accept` hit the backend (`docker compose logs`), confirmed the request left the database's pending list (fresh `curl` to `/friend_requests/pending` returned `[]`), and confirmed the UI removed it from screen with no reload.
 
 Next: `handleDecline` — same shape as `handleAccept`, swapping `/accept` for `/decline`.
+
+## 2026-08-27
+
+### Git branching practice (general, `master`/branch/merge/`reset --hard`)
+
+Worked through the real branch lifecycle in this repo: `git checkout -b practice-branch`, committed a throwaway change on it, switched back to `master` and watched the change disappear (a genuine "oh, branches really are separate" moment — briefly looked like a bug when the editor kept showing stale content after the checkout, but that was just the editor not re-reading the file from disk, not a git issue), merged it back in, then used `git reset --hard HEAD~1` to fully undo the merge commit once we realized it was just noise — confirmed safe since it was the tip commit and nothing else was pushed anywhere.
+
+### `handleDecline` — second `onClick`-with-argument rep
+
+Built as a close mirror of `handleAccept` (same shape: get token, POST fetch, refresh the pending list after) — real repetition of yesterday's new concept rather than a new one. Two real bugs on the first pass: `https://` instead of `http://`, and `/friend_request/` (singular) instead of `/friend_requests/` (plural) — both caught before testing, neither was a guess-and-check fix.
+
+**Verified for real:** fresh test request created via curl, clicked the live Decline button in the browser, confirmed `POST /friend_requests/{id}/decline` hit the backend with `200 OK`, confirmed the request left "Friend Requests" without a reload, and confirmed it correctly did *not* get added to "Friends" (declining shouldn't create a friendship).
+
+Next: a form to send a new friend request by email, directly from the dashboard.
+
+### Send Friend Request form — first real `<form>` built from scratch on the dashboard
+
+New concepts: the `submit` event (fires on the `<form>`, triggered by pressing Enter in an input or clicking a `type="submit"` button — not something the button/input itself fires), and combining a form submission with an authenticated POST for the first time (`LoginPage`'s form has no auth token since you're not logged in yet; `handleAccept`/`handleDecline`'s POSTs aren't form submissions). Real bugs caught along the way: writing `if (response.ok) :` / `else:` — Python's colon-based block syntax used out of habit where JS needs curly braces `{ }`, which would've been an outright syntax error; storing the whole response object in `message` instead of just `data.detail`, which would've crashed React trying to render an object as text; and a function name mismatch (`handSentInformation` defined vs `handleSentInformation` referenced in `onSubmit`), caught before it ever ran.
+
+Also planned a rough wireframe (via a visual mockup) for the dashboard's eventual full shape — Friends / Friend Requests / Send Request / Availability / Outings as consistently-wrapped `.dashboard-section` cards — so upcoming sections have a CSS-ready structure without blocking on real visual design yet. Retrofitted the two existing sections to match.
+
+**Verified for real:** submitted the actual form in the browser (via a real DOM `input`/`submit` event, not just a JS fetch call), confirmed `POST /friend_requests` hit the backend with `200 OK`, confirmed the success message rendered, and confirmed the *recipient's* own `/friend_requests/pending` (checked via a separate login) genuinely showed the new incoming request — end to end through the real UI, not simulated.
