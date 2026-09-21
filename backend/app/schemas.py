@@ -56,5 +56,8 @@ class OutingInviteOut(BaseModel):
     outing_id : int
     invitee_id : int
     status : str
+    outing_title : str 
+    outing_location : str 
+    outing_time : datetime
     responded_at: Optional[datetime]
     model_config= {"from_attributes":True }

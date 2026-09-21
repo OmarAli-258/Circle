@@ -186,7 +186,18 @@ def accept_outing_invite(invite_id : int ,current_user : User = Depends(get_curr
     outinginvite.responded_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(outinginvite)
-    return outinginvite
+    detail=db.query(Outing).filter(outinginvite.outing_id==Outing.id).first()
+    outinginviteout=OutingInviteOut(
+        id = outinginvite.id,
+        outing_id = outinginvite.outing_id,
+        invitee_id = outinginvite.invitee_id,
+        status = outinginvite.status,
+        outing_title = detail.title,
+        outing_location = detail.location,
+        outing_time = detail.proposed_time,
+        responded_at = outinginvite.responded_at,
+    )
+    return outinginviteout
 
 @app.post("/outing_invites/{invite_id}/decline",response_model=OutingInviteOut)
 def decline_outing_invite(invite_id : int ,current_user : User = Depends(get_current_user) , db : Session = Depends(get_db)):
@@ -201,7 +212,18 @@ def decline_outing_invite(invite_id : int ,current_user : User = Depends(get_cur
     outinginvite.responded_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(outinginvite)
-    return outinginvite
+    detail=db.query(Outing).filter(outinginvite.outing_id==Outing.id).first()
+    outinginviteout=OutingInviteOut(
+        id = outinginvite.id,
+        outing_id = outinginvite.outing_id,
+        invitee_id = outinginvite.invitee_id,
+        status = outinginvite.status,
+        outing_title = detail.title,
+        outing_location = detail.location,
+        outing_time = detail.proposed_time,
+        responded_at = outinginvite.responded_at,
+    )
+    return outinginviteout    
 @app.get("/friend_requests/pending",response_model=list[FriendRequestOut])
 def my_friend_requests(current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     recieved_requests=db.query(FriendRequest).filter(current_user.id== FriendRequest.recipient_id,
@@ -216,5 +238,22 @@ def my_friend_requests(current_user : User = Depends(get_current_user), db : Ses
             recipient_id=request.recipient_id,
             status=request.status,
             created_at=request.created_at,
+        ))
+    return result
+@app.get("/outing_invites/pending", response_model=list[OutingInviteOut])
+def my_outing_invites(current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    outing_invites=db.query(OutingInvite).filter(current_user.id ==OutingInvite.invitee_id, OutingInvite.status=="pending").all()
+    result = []
+    for invite in outing_invites:
+        outing = db.query(Outing).filter(Outing.id == invite.outing_id).first()
+        result.append(OutingInviteOut(
+            id = invite.id,
+            outing_id = invite.outing_id,
+            invitee_id = invite.invitee_id,
+            status = invite.status,
+            outing_title = outing.title,
+            outing_location = outing.location,
+            outing_time = outing.proposed_time,
+            responded_at = invite.responded_at,
         ))
     return result
