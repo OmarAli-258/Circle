@@ -449,3 +449,13 @@ Ran short on time, so Claude finished the JSX form itself (same shape as the Sen
 **Verified for real:** submitted the actual form via real DOM events in the browser, confirmed `POST /availability` hit the backend with `200 OK`, and confirmed the success message rendered.
 
 Next: a section showing actual availability matches (`GET /availability/matches`) — right now you can post a window but never see who it matched with.
+
+## 2026-09-21
+
+Back after a month-long internship break. Set a hard deadline: finish the remaining scope in 5 days at ~3 hrs/day. Remaining work reviewed and re-scoped: matches display, a missing `GET /outing_invites/pending` backend endpoint, outings UI (create form with a new friend-multi-select pattern, plus a repeat of the accept/decline pattern), logout, protected routes, a CSS pass, then tests/CI/deployment as stretch goals — deployment flagged as the highest-variance item to cut first if short on time.
+
+### Availability Matches display — third rep of the fetch+`useState`+`.map()` pattern
+
+Pure repetition of the Friends-list shape (`GET /availability/matches`, already built and working). Two real bugs, both understood before fixing: called `displayMatched` with no parentheses and outside any `useEffect` — which wouldn't have run it at all, and if it *had* run directly in the render body, would have caused an infinite re-render loop (fetch → `setMatchedFriends` → re-render → fetch again, forever) — same reason every other fetch here lives inside a `useEffect` with `[]`; and later, `<p key={friend.id}>friend.email</p>` written without curly braces around `friend.email`, which JSX renders as the literal text "friend.email" rather than evaluating it as a real property lookup.
+
+**Verified for real:** posted two overlapping availability windows via curl for two already-friended test accounts, confirmed the backend returned the correct match, then confirmed the actual dashboard UI rendered `verifya@example.com` under "Matches" with no console errors.

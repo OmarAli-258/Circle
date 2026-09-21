@@ -23,7 +23,7 @@ function DashboardPage() {
       setFriends(data)
     }
     displayFriends()
-  }, [])
+  }, []) 
   const [friendsList, setFriendsList] = useState([])
   async function displayFriendsList(){
     const token= localStorage.getItem("token")
@@ -97,7 +97,18 @@ function DashboardPage() {
       setAvailabilityMessage(data.detail)
     }
   }
-
+  const [matchedFriends, setMatchedFriends] =useState([])
+  useEffect(()=>{
+    async function displayMatched() {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`http://localhost:8000/availability/matches`, {
+        headers : { "Authorization" : `Bearer ${token}`}
+      })
+      const data = await response.json()
+      setMatchedFriends(data)
+    } 
+    displayMatched()
+    }, [])
   return (
     <div>
       <h2>Dashboard</h2>
@@ -135,7 +146,10 @@ function DashboardPage() {
         </form>
         {availabilityMessage && <p>{availabilityMessage}</p>}
       </div>
-
+      <div className="dashboard-section">
+        <h3>Matches</h3>
+        {matchedFriends.map(friend => <p key={friend.id}>{friend.email}</p>)}
+      </div>
     </div>
   )
 }
