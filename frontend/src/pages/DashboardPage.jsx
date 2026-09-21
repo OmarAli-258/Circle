@@ -74,6 +74,29 @@ function DashboardPage() {
     setMessage(data.detail)
     }
   }
+  const [availabilityStart,setAvailabilityStart] =useState("")
+  const [availabilityEnd, setAvailabilityEnd] = useState("")
+  const [availabilityMessage, setAvailabilityMessage] = useState("")
+  async function handlePostAvailabilty(e){
+    e.preventDefault()
+    const token = localStorage.getItem("token")
+    const response = await fetch(`http://localhost:8000/availability`, {
+      method: "POST",
+      headers : {
+        "Content-Type" : "application/json",
+        "Authorization" : `Bearer ${token}`
+      },
+      body : JSON.stringify({ start_time: availabilityStart, end_time : availabilityEnd})
+    })
+    const data = await response.json() 
+    if (response.ok) {
+      setAvailabilityStart("")
+      setAvailabilityEnd("")
+      setAvailabilityMessage("Availability Set")
+    } else {
+      setAvailabilityMessage(data.detail)
+    }
+  }
 
   return (
     <div>
@@ -103,6 +126,16 @@ function DashboardPage() {
       </form>
       {message && <p>{message}</p>}
       </div>
+      <div className="dashboard-section">
+        <h3>Availability</h3>
+        <form onSubmit={handlePostAvailabilty}>
+          <input type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} />
+          <input type="datetime-local" value={availabilityEnd} onChange={(e) => setAvailabilityEnd(e.target.value)} />
+          <button type="submit">Post</button>
+        </form>
+        {availabilityMessage && <p>{availabilityMessage}</p>}
+      </div>
+
     </div>
   )
 }

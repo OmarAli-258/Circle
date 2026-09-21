@@ -437,3 +437,15 @@ New concepts: the `submit` event (fires on the `<form>`, triggered by pressing E
 Also planned a rough wireframe (via a visual mockup) for the dashboard's eventual full shape — Friends / Friend Requests / Send Request / Availability / Outings as consistently-wrapped `.dashboard-section` cards — so upcoming sections have a CSS-ready structure without blocking on real visual design yet. Retrofitted the two existing sections to match.
 
 **Verified for real:** submitted the actual form in the browser (via a real DOM `input`/`submit` event, not just a JS fetch call), confirmed `POST /friend_requests` hit the backend with `200 OK`, confirmed the success message rendered, and confirmed the *recipient's* own `/friend_requests/pending` (checked via a separate login) genuinely showed the new incoming request — end to end through the real UI, not simulated.
+
+## 2026-08-28
+
+### Post-availability form — `datetime-local` inputs, first solo attempt at a new form
+
+New concept: `<input type="datetime-local">`, controlled the same `value`/`onChange` way as every other input so far, just with a different string format (`"YYYY-MM-DDTHH:MM"`). Real bugs caught before running: a stray-space header key (`" Authorization "` instead of `"Authorization"` — would have thrown at the `fetch` call itself, since HTTP header names can't contain spaces), and a genuine key/value inversion in the request body — `{availabilityStart: start_time, ...}` instead of `{start_time: availabilityStart, ...}`, i.e. using the frontend's own state names as the JSON keys and referencing undefined variables as the values, rather than the backend's expected field names as keys with the real state as values. Also discussed `response.ok` properly for the first time: `fetch` does not throw on a non-2xx HTTP response (400/404/422/etc.) — only on genuine network failures — so checking `response.ok` manually is the only way to detect a rejected request. Noted but left unfixed: FastAPI's automatic 422 validation errors return `detail` as a list of objects, not a plain string, which would crash `{availabilityMessage}` if it were ever hit — acceptable known gap for now, unlikely to trigger from a `datetime-local` input in normal use.
+
+Ran short on time, so Claude finished the JSX form itself (same shape as the Send Friend Request form, wired to the already-user-written `handlePostAvailabilty`) rather than the user typing it — an explicit exception, not the default.
+
+**Verified for real:** submitted the actual form via real DOM events in the browser, confirmed `POST /availability` hit the backend with `200 OK`, and confirmed the success message rendered.
+
+Next: a section showing actual availability matches (`GET /availability/matches`) — right now you can post a window but never see who it matched with.
