@@ -97,6 +97,7 @@ function DashboardPage() {
       setAvailabilityMessage(data.detail)
     }
   }
+
   const [matchedFriends, setMatchedFriends] =useState([])
   useEffect(()=>{
     async function displayMatched() {
@@ -109,6 +110,38 @@ function DashboardPage() {
     } 
     displayMatched()
     }, [])
+  
+  const [outingInvites, setOutinginvites] = useState([])
+  async function displayOutingInvites() {
+    const token = localStorage.getItem("token")
+    const response = await fetch(`http://localhost:8000/outing_invites/pending`, {
+      headers : {"Authorization" : `Bearer ${token} `}
+    })
+    const data = await response.json()
+    setOutinginvites(data)
+  }
+  useEffect(()=>{
+    displayOutingInvites()
+  }, [])
+
+  async function handleAcceptOuting(id) {
+    const token = localStorage.getItem("token")
+    const response = await fetch(`http://localhost:8000/outing_invites/${id}/accept`,{
+      method : "POST",
+      headers : {"Authorization" : `Bearer ${token}`} 
+    })
+    displayOutingInvites()
+  }
+
+  async function handleDeclineOuting(id) {
+    const token = localStorage.getItem("token")
+    const response = await fetch(`http://localhost:8000/outing_invites/${id}/decline`,{
+      method : "POST",
+      headers : {"Authorization" : `Bearer ${token}`} 
+    })
+    displayOutingInvites()
+  }
+
   return (
     <div>
       <h2>Dashboard</h2>
@@ -149,6 +182,16 @@ function DashboardPage() {
       <div className="dashboard-section">
         <h3>Matches</h3>
         {matchedFriends.map(friend => <p key={friend.id}>{friend.email}</p>)}
+      </div>
+      <div className="dashboard-section">
+      <h3>OutingInvites</h3>
+      {outingInvites.map(invite => (
+        <p key={invite.id}>
+          {invite.outing_title}, {invite.outing_location}, {invite.outing_time}
+          <button onClick={() => handleAcceptOuting(invite.id)}>Accept</button>
+          <button onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
+        </p>
+      ))}
       </div>
     </div>
   )
