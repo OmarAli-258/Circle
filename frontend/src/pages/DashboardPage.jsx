@@ -1,12 +1,22 @@
 import {useState, useEffect} from "react"
 import {useNavigate} from "react-router-dom"
 function DashboardPage() {
+  useEffect(() => {
+    async function checkLogin(){
+      const token = localStorage.getItem("token")
+      if (!token){
+        navigate("/login")
+      }
+    }
+    checkLogin()
+  },[] )
   const [currentUser, setCurrentUser] = useState(null)
   const navigate = useNavigate()
   function handleLogout(){
     localStorage.removeItem("token")
     navigate("/login")
   }
+
   useEffect(() => {
     async function fetchUser() {
       const token = localStorage.getItem("token")
@@ -18,6 +28,7 @@ function DashboardPage() {
     } 
     fetchUser() 
   }, [])
+
   const [friends, setFriends] = useState([])
   useEffect(() => {
     async function displayFriends(){
