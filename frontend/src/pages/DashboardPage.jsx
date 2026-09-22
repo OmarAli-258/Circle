@@ -20,6 +20,7 @@ function DashboardPage() {
   useEffect(() => {
     async function fetchUser() {
       const token = localStorage.getItem("token")
+      if (!token) return
       const response = await fetch("http://localhost:8000/me", {
       headers : {"Authorization": `Bearer ${token}`},
       })
@@ -33,6 +34,7 @@ function DashboardPage() {
   useEffect(() => {
     async function displayFriends(){
       const token = localStorage.getItem("token")
+      if (!token) return
       const response = await fetch("http://localhost:8000/friends", {
         headers: {"Authorization": `Bearer ${token}` },
       })
@@ -44,6 +46,7 @@ function DashboardPage() {
   const [friendsList, setFriendsList] = useState([])
   async function displayFriendsList(){
     const token= localStorage.getItem("token")
+    if (!token) return
     const response = await fetch("http://localhost:8000/friend_requests/pending", {
       headers: {"Authorization" : `Bearer ${token}` },
     })
@@ -119,6 +122,7 @@ function DashboardPage() {
   useEffect(()=>{
     async function displayMatched() {
       const token = localStorage.getItem("token")
+      if (!token) return
       const response = await fetch(`http://localhost:8000/availability/matches`, {
         headers : { "Authorization" : `Bearer ${token}`}
       })
@@ -131,6 +135,7 @@ function DashboardPage() {
   const [outingInvites, setOutinginvites] = useState([])
   async function displayOutingInvites() {
     const token = localStorage.getItem("token")
+    if (!token) return
     const response = await fetch(`http://localhost:8000/outing_invites/pending`, {
       headers : {"Authorization" : `Bearer ${token} `}
     })
