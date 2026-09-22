@@ -202,21 +202,27 @@ function DashboardPage() {
 
   return (
     <div>
-      <h2>Dashboard</h2>
-      {currentUser && <p>Logged in as {currentUser.email}</p>}
-      <button onClick = {() => handleLogout()}>Logout</button>
+      <div className="page-header">
+        <h2>Dashboard</h2>
+        <div className="page-header-right">
+          {currentUser && <p>Logged in as {currentUser.email}</p>}
+          <button className="btn-secondary" onClick = {() => handleLogout()}>Logout</button>
+        </div>
+      </div>
 
       <div className="dashboard-section">
         <h3>Friends</h3>
-        {friends.map(friend => <p key ={friend.id}> {friend.email} </p>)}
+        {friends.map(friend => <p className="list-row" key ={friend.id}> {friend.email} </p>)}
       </div>
 
       <div className="dashboard-section">
         <h3>Friend Requests</h3>
-        {friendsList.map(friend_request => ( <p key = {friend_request.id}>
-          {friend_request.requester_email}
-          <button onClick={() => handleAccept(friend_request.id)}>Accept</button>
-          <button onClick={() => handleDecline(friend_request.id)}>Decline</button>
+        {friendsList.map(friend_request => ( <p className="list-row" key = {friend_request.id}>
+          <span>{friend_request.requester_email}</span>
+          <span className="row-actions">
+            <button onClick={() => handleAccept(friend_request.id)}>Accept</button>
+            <button className="btn-secondary" onClick={() => handleDecline(friend_request.id)}>Decline</button>
+          </span>
         </p>
       ))}
       </div>
@@ -238,21 +244,23 @@ function DashboardPage() {
         </form>
         {availabilityMessage && <p>{availabilityMessage}</p>}
       </div>
-      <div className="dashboard-section">
+      <div className="dashboard-section dashboard-section--plum">
         <h3>Matches</h3>
-        {matchedFriends.map(friend => <p key={friend.id}>{friend.email}</p>)}
+        {matchedFriends.map(friend => <p className="list-row" key={friend.id}>{friend.email}</p>)}
       </div>
       <div className="dashboard-section">
-      <h3>OutingInvites</h3>
+      <h3>Outing Invites</h3>
       {outingInvites.map(invite => (
-        <p key={invite.id}>
-          {invite.outing_title}, {invite.outing_location}, {invite.outing_time}
-          <button onClick={() => handleAcceptOuting(invite.id)}>Accept</button>
-          <button onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
+        <p className="list-row" key={invite.id}>
+          <span>{invite.outing_title}, {invite.outing_location}, {invite.outing_time}</span>
+          <span className="row-actions">
+            <button onClick={() => handleAcceptOuting(invite.id)}>Accept</button>
+            <button className="btn-secondary" onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
+          </span>
         </p>
       ))}
       </div>
-      <div className="dashboard-section">
+      <div className="dashboard-section dashboard-section--plum">
         <h3>Create Outing</h3>
         <form onSubmit={handleCreateOuting}>
           <input type="text" value={outingTitle} onChange={(e) => setOutingTitle(e.target.value)} placeholder="Title" />

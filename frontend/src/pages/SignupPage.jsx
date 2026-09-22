@@ -22,15 +22,17 @@ function SignupPage() {
   }
 
   return (
-    <div>
-      <h2>Circle</h2>
-      <form onSubmit={handleSubmit}>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
-        <button type="submit">Sign up</button>
-      </form>
-      {message && <p>{message}</p>}
-      <p><Link to="/login">Already have an account? Log in</Link></p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h2>Circle</h2>
+        <form onSubmit={handleSubmit}>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+          <button type="submit">Sign up</button>
+        </form>
+        {message && <p className="form-message">{message}</p>}
+        <p><Link to="/login">Already have an account? Log in</Link></p>
+      </div>
     </div>
   )
 }

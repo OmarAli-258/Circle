@@ -24,15 +24,17 @@ function LoginPage() {
   }
 
   return (
-    <div>
-      <h2>Circle</h2>
-      <form onSubmit={handleLogin}>
-        <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="Email" />
-        <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Password" />
-        <button type="submit">Log in</button>
-      </form>
-      {message && <p>{message}</p>}
-      <p><Link to="/signup">Need an account? Sign up</Link></p>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h2>Circle</h2>
+        <form onSubmit={handleLogin}>
+          <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="Email" />
+          <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Password" />
+          <button type="submit">Log in</button>
+        </form>
+        {message && <p className="form-message">{message}</p>}
+        <p><Link to="/signup">Need an account? Sign up</Link></p>
+      </div>
     </div>
   )
 }
