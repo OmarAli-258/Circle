@@ -489,3 +489,9 @@ New concept: an array of selected ids (`invitedFriends`) driven by a toggle func
 **Verified for real:** filled out and submitted the actual form in the browser (real DOM events: text inputs, a datetime input, and a checkbox click), confirmed `POST /outings` hit the backend with `200 OK`, confirmed the "Outing created" message rendered, and confirmed the invited friend's own `/outing_invites/pending` genuinely showed the new outing with correct title/location/time — end to end through the real UI, not simulated. This completes the entire outings feature (backend + frontend).
 
 Next: logout button, protected routes, then a CSS pass — the last non-stretch items before tests/CI/deployment.
+
+### Logout button — first use of `useNavigate` outside `LoginPage`
+
+New import (`useNavigate` from `react-router-dom`, already known from `LoginPage`) plus one new method, `localStorage.removeItem("token")` — the delete counterpart to `setItem`. No fetch involved at all, the simplest handler in the file. Two small bugs: a naming-convention slip (`handlelogout`, all lowercase, inconsistent with every other `handleX` in the file — fixed for consistency, not because it would've broken); and the real bug, `onClick={() => handleLogout}` — the arrow function's body was just the bare function name, which evaluates to a reference to the function without ever calling it, so nothing would have happened on click. Needed either `onClick={handleLogout}` (no wrapper, since no argument is needed) or `onClick={() => handleLogout()}` (wrapper, but actually invoking it) — went with the latter.
+
+**Verified for real:** logged in as a real test user, clicked the actual Logout button in the browser, confirmed `localStorage`'s token became `null` and the URL redirected to `/login`, no console errors.

@@ -1,6 +1,12 @@
 import {useState, useEffect} from "react"
+import {useNavigate} from "react-router-dom"
 function DashboardPage() {
   const [currentUser, setCurrentUser] = useState(null)
+  const navigate = useNavigate()
+  function handleLogout(){
+    localStorage.removeItem("token")
+    navigate("/login")
+  }
   useEffect(() => {
     async function fetchUser() {
       const token = localStorage.getItem("token")
@@ -182,6 +188,7 @@ function DashboardPage() {
     <div>
       <h2>Dashboard</h2>
       {currentUser && <p>Logged in as {currentUser.email}</p>}
+      <button onClick = {() => handleLogout()}>Logout</button>
 
       <div className="dashboard-section">
         <h3>Friends</h3>
