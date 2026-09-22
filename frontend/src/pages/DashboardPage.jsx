@@ -142,6 +142,42 @@ function DashboardPage() {
     displayOutingInvites()
   }
 
+  const [invitedFriends, setInvitedFriends ] = useState([])
+  function toggleInvitedFriends(id) {
+    if (invitedFriends.includes(id)) {
+      setInvitedFriends(invitedFriends.filter(i => i !==id ))
+    } else {
+      setInvitedFriends([...invitedFriends,id])
+    }
+  } 
+
+  const [proposedTime, setProposedTime] = useState("")
+  const [outingLocation,setOutingLocation] = useState("")
+  const [outingTitle, setOutingTitle] = useState("")
+  const [outingMessage, setOutingMessage] = useState("")
+  async function handleCreateOuting(e) {
+    e.preventDefault()
+    const token = localStorage.getItem("token")
+    const response = await fetch(`http://localhost:8000/outings`, {
+      method : "POST",
+      headers : {
+        "Content-Type" : "application/json",
+        "Authorization" : `Bearer ${token}`},
+      body : JSON.stringify({title : outingTitle ,location : outingLocation , proposed_time :proposedTime, 
+        invitee_ids : invitedFriends})
+    })
+    const data = await response.json()
+    if (response.ok) {
+      setOutingTitle("")
+      setProposedTime("")
+      setOutingLocation("")
+      setInvitedFriends([])
+      setOutingMessage("Outing created")
+    } else{
+      setOutingMessage(data.detail)
+    }
+  }
+
   return (
     <div>
       <h2>Dashboard</h2>
@@ -192,6 +228,22 @@ function DashboardPage() {
           <button onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
         </p>
       ))}
+      </div>
+      <div className="dashboard-section">
+        <h3>Create Outing</h3>
+        <form onSubmit={handleCreateOuting}>
+          <input type="text" value={outingTitle} onChange={(e) => setOutingTitle(e.target.value)} placeholder="Title" />
+          <input type="datetime-local" value={proposedTime} onChange={(e) => setProposedTime(e.target.value)} />
+          <input type="text" value={outingLocation} onChange={(e) => setOutingLocation(e.target.value)} placeholder="Location" />
+          {friends.map(friend => (
+            <label key={friend.id}>
+              <input type="checkbox" checked={invitedFriends.includes(friend.id)} onChange={() => toggleInvitedFriends(friend.id)} />
+              {friend.email}
+            </label>
+          ))}
+          <button type="submit">Create Outing</button>
+        </form>
+        {outingMessage && <p>{outingMessage}</p>}
       </div>
     </div>
   )
