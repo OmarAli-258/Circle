@@ -229,8 +229,8 @@ function DashboardPage() {
       <div className ="dashboard-section">
       <h3>Send Friend Requests</h3>
       <form onSubmit={handleSentInformation}>
-        <input type= "email" value= {requestEmail} onChange={(e) => setRequestEmail(e.target.value)}  
-        />
+        <label htmlFor="request-email">Friend's email</label>
+        <input id="request-email" type="email" value={requestEmail} onChange={(e) => setRequestEmail(e.target.value)} />
         <button type="submit">Send</button>
       </form>
       {message && <p>{message}</p>}
@@ -238,8 +238,10 @@ function DashboardPage() {
       <div className="dashboard-section">
         <h3>Availability</h3>
         <form onSubmit={handlePostAvailabilty}>
-          <input type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} />
-          <input type="datetime-local" value={availabilityEnd} onChange={(e) => setAvailabilityEnd(e.target.value)} />
+          <label htmlFor="availability-start">Available from</label>
+          <input id="availability-start" type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} />
+          <label htmlFor="availability-end">Available until</label>
+          <input id="availability-end" type="datetime-local" value={availabilityEnd} onChange={(e) => setAvailabilityEnd(e.target.value)} />
           <button type="submit">Post</button>
         </form>
         {availabilityMessage && <p>{availabilityMessage}</p>}
@@ -263,9 +265,12 @@ function DashboardPage() {
       <div className="dashboard-section dashboard-section--plum">
         <h3>Create Outing</h3>
         <form onSubmit={handleCreateOuting}>
-          <input type="text" value={outingTitle} onChange={(e) => setOutingTitle(e.target.value)} placeholder="Title" />
-          <input type="datetime-local" value={proposedTime} onChange={(e) => setProposedTime(e.target.value)} />
-          <input type="text" value={outingLocation} onChange={(e) => setOutingLocation(e.target.value)} placeholder="Location" />
+          <label htmlFor="outing-title">Title</label>
+          <input id="outing-title" type="text" value={outingTitle} onChange={(e) => setOutingTitle(e.target.value)} />
+          <label htmlFor="outing-time">When</label>
+          <input id="outing-time" type="datetime-local" value={proposedTime} onChange={(e) => setProposedTime(e.target.value)} />
+          <label htmlFor="outing-location">Location</label>
+          <input id="outing-location" type="text" value={outingLocation} onChange={(e) => setOutingLocation(e.target.value)} />
           {friends.map(friend => (
             <label key={friend.id}>
               <input type="checkbox" checked={invitedFriends.includes(friend.id)} onChange={() => toggleInvitedFriends(friend.id)} />

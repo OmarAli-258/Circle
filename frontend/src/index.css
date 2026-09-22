@@ -70,6 +70,13 @@ p {
   margin: 0;
 }
 
+label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
 a {
   color: var(--coral);
 }

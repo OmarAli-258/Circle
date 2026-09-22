@@ -26,8 +26,10 @@ function SignupPage() {
       <div className="auth-card">
         <h2>Circle</h2>
         <form onSubmit={handleSubmit}>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+          <label htmlFor="signup-email">Email</label>
+          <input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          <label htmlFor="signup-password">Password</label>
+          <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
           <button type="submit">Sign up</button>
         </form>
         {message && <p className="form-message">{message}</p>}

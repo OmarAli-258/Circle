@@ -515,3 +515,13 @@ Implemented in `frontend/src/index.css` (rewritten from the unused Vite boilerpl
 **Verified for real:** screenshotted the styled Dashboard, Login, and Signup pages in the browser: cards, warm/plum color roles, and typography all render correctly with zero console errors (confirmed in a fresh tab after an initial stale-console false alarm). Ran an actual login through the real, now-styled form (real DOM input events, not simulated state) and confirmed it still redirects to `/dashboard` correctly — no functional regression from the styling changes.
 
 Next: continue the CSS pass section by section with the user driving decisions live in their own browser, then tests/CI/deployment as stretch goals.
+
+### CSS pass, round 2 — researched real login-page comps, then labels + autoComplete everywhere
+
+Corrected process mid-round-1: user wants the CSS pass genuinely one piece at a time with a live look after each piece, not batched — and wants a plain-language explanation after each change even though Claude is writing this code, not just a diff summary. Applying that from here on.
+
+Researched real login page design comps (Headspace validated the current calm/simple direction; Dribbble's split-screen-with-art and Tasky's illustrated approach were both noted but ruled out as scope-inappropriate) and login-form UX best practices, then filtered to what's realistic for a 5-day CV project: added real `<label>` elements (connected via matching `htmlFor`/`id`, replacing placeholder-only fields) and `autoComplete` attributes (`"email"`, `"current-password"` on Login, `"new-password"` on Signup so browsers offer to generate rather than reuse a password) across Login and Signup, then extended labels (without `autoComplete`, since it doesn't semantically apply) to every other form on the dashboard — Send Friend Request, Availability, Create Outing. Explicitly named and deferred as out of scope: SSO, passkeys/OTP, multi-step onboarding — enterprise-scale auth features inappropriate for this project's timeline.
+
+**Verified for real:** confirmed every label's `htmlFor` correctly matches its input's `id` via the DOM, confirmed `autoComplete` values landed correctly, and ran both an actual login and an actual outing creation through the real, now-labeled forms — both still work identically to before, no functional regression from the accessibility markup change.
+
+Still flagged, not yet done: no loading state on submit, no show/hide password toggle, no autofocus on the first field — deliberately queued as separate future pieces rather than batched into this one.

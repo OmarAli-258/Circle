@@ -28,8 +28,10 @@ function LoginPage() {
       <div className="auth-card">
         <h2>Circle</h2>
         <form onSubmit={handleLogin}>
-          <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="Email" />
-          <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="Password" />
+          <label htmlFor="login-email">Email</label>
+          <input id="login-email" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} autoComplete="email" />
+          <label htmlFor="login-password">Password</label>
+          <input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} autoComplete="current-password" />
           <button type="submit">Log in</button>
         </form>
         {message && <p className="form-message">{message}</p>}
