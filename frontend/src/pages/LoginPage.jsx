@@ -5,10 +5,12 @@ function LoginPage() {
   const [loginEmail, setLoginEmail] = useState("")
   const [loginPassword, setLoginPassword] = useState("")
   const [message, setMessage] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
   async function handleLogin(e) {
     e.preventDefault()
+    setIsSubmitting(true)
     const response = await fetch("http://localhost:8000/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -20,6 +22,7 @@ function LoginPage() {
       navigate("/dashboard")
     } else {
       setMessage(data.detail)
+      setIsSubmitting(false)
     }
   }
 
@@ -32,7 +35,7 @@ function LoginPage() {
           <input id="login-email" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} autoComplete="email" />
           <label htmlFor="login-password">Password</label>
           <input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} autoComplete="current-password" />
-          <button type="submit">Log in</button>
+          <button type="submit" disabled={isSubmitting}>{isSubmitting ? "Logging in..." : "Log in"}</button>
         </form>
         {message && <p className="form-message">{message}</p>}
         <p><Link to="/signup">Need an account? Sign up</Link></p>

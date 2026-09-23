@@ -89,13 +89,16 @@ function DashboardPage() {
   }
   const [requestEmail, setRequestEmail] = useState("")
   const [message ,setMessage] = useState("")
+  const [messageIsError, setMessageIsError] = useState(false)
+  const [sendingRequest, setSendingRequest] = useState(false)
   async function handleSentInformation(e){
     e.preventDefault()
+    setSendingRequest(true)
     const token = localStorage.getItem("token")
     const response = await fetch(`http://localhost:8000/friend_requests`, {
       method : "POST",
       headers : {
-        "Content-Type": "application/json", 
+        "Content-Type": "application/json",
         "Authorization" : `Bearer ${token}`
     },
     body : JSON.stringify({recipient_email: requestEmail})
@@ -104,16 +107,22 @@ function DashboardPage() {
     if (response.ok) {
     setRequestEmail("")
     setMessage("Friend request sent")
+    setMessageIsError(false)
     }
-    else{ 
+    else{
     setMessage(data.detail)
+    setMessageIsError(true)
     }
+    setSendingRequest(false)
   }
   const [availabilityStart,setAvailabilityStart] =useState("")
   const [availabilityEnd, setAvailabilityEnd] = useState("")
   const [availabilityMessage, setAvailabilityMessage] = useState("")
+  const [availabilityMessageIsError, setAvailabilityMessageIsError] = useState(false)
+  const [postingAvailability, setPostingAvailability] = useState(false)
   async function handlePostAvailabilty(e){
     e.preventDefault()
+    setPostingAvailability(true)
     const token = localStorage.getItem("token")
     const response = await fetch(`http://localhost:8000/availability`, {
       method: "POST",
@@ -123,14 +132,17 @@ function DashboardPage() {
       },
       body : JSON.stringify({ start_time: availabilityStart, end_time : availabilityEnd})
     })
-    const data = await response.json() 
+    const data = await response.json()
     if (response.ok) {
       setAvailabilityStart("")
       setAvailabilityEnd("")
       setAvailabilityMessage("Availability Set")
+      setAvailabilityMessageIsError(false)
     } else {
       setAvailabilityMessage(data.detail)
+      setAvailabilityMessageIsError(true)
     }
+    setPostingAvailability(false)
   }
 
   const [matchedFriends, setMatchedFriends] =useState([])
@@ -202,15 +214,18 @@ function DashboardPage() {
   const [outingLocation,setOutingLocation] = useState("")
   const [outingTitle, setOutingTitle] = useState("")
   const [outingMessage, setOutingMessage] = useState("")
+  const [outingMessageIsError, setOutingMessageIsError] = useState(false)
+  const [creatingOuting, setCreatingOuting] = useState(false)
   async function handleCreateOuting(e) {
     e.preventDefault()
+    setCreatingOuting(true)
     const token = localStorage.getItem("token")
     const response = await fetch(`http://localhost:8000/outings`, {
       method : "POST",
       headers : {
         "Content-Type" : "application/json",
         "Authorization" : `Bearer ${token}`},
-      body : JSON.stringify({title : outingTitle ,location : outingLocation , proposed_time :proposedTime, 
+      body : JSON.stringify({title : outingTitle ,location : outingLocation , proposed_time :proposedTime,
         invitee_ids : invitedFriends})
     })
     const data = await response.json()
@@ -220,9 +235,12 @@ function DashboardPage() {
       setOutingLocation("")
       setInvitedFriends([])
       setOutingMessage("Outing created")
+      setOutingMessageIsError(false)
     } else{
       setOutingMessage(data.detail)
+      setOutingMessageIsError(true)
     }
+    setCreatingOuting(false)
   }
 
   return (
@@ -259,9 +277,9 @@ function DashboardPage() {
       <form onSubmit={handleSentInformation}>
         <label htmlFor="request-email">Friend's email</label>
         <input id="request-email" type="email" value={requestEmail} onChange={(e) => setRequestEmail(e.target.value)} />
-        <button type="submit">Send</button>
+        <button type="submit" disabled={sendingRequest}>{sendingRequest ? "Sending..." : "Send"}</button>
       </form>
-      {message && <p>{message}</p>}
+      {message && <p className={messageIsError ? "form-message" : "form-message form-message--success"}>{message}</p>}
       </div>
       <div className="dashboard-section">
         <h3>Availability</h3>
@@ -270,9 +288,9 @@ function DashboardPage() {
           <input id="availability-start" type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} />
           <label htmlFor="availability-end">Available until</label>
           <input id="availability-end" type="datetime-local" value={availabilityEnd} onChange={(e) => setAvailabilityEnd(e.target.value)} />
-          <button type="submit">Post</button>
+          <button type="submit" disabled={postingAvailability}>{postingAvailability ? "Posting..." : "Post"}</button>
         </form>
-        {availabilityMessage && <p>{availabilityMessage}</p>}
+        {availabilityMessage && <p className={availabilityMessageIsError ? "form-message" : "form-message form-message--success"}>{availabilityMessage}</p>}
       </div>
       {matchedFriends.length > 0 && (
       <div className="dashboard-section dashboard-section--plum">
@@ -309,9 +327,9 @@ function DashboardPage() {
               {friend.email}
             </label>
           ))}
-          <button type="submit">Create Outing</button>
+          <button type="submit" disabled={creatingOuting}>{creatingOuting ? "Creating..." : "Create Outing"}</button>
         </form>
-        {outingMessage && <p>{outingMessage}</p>}
+        {outingMessage && <p className={outingMessageIsError ? "form-message" : "form-message form-message--success"}>{outingMessage}</p>}
       </div>
     </div>
   )

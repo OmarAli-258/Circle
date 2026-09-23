@@ -16,6 +16,9 @@
   --plum-bg: #f5edf3;
   --plum-border: #ddbfd8;
 
+  --danger: #b23b3b;
+  --success: #3f7d4a;
+
   --radius-sm: 8px;
   --radius-lg: 14px;
 
@@ -113,10 +116,21 @@ button {
   background: var(--coral);
   color: #fff;
   font-weight: 500;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
 button:hover {
   background: var(--coral-hover);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .dashboard-section {
@@ -237,7 +251,11 @@ button:hover {
 }
 
 .form-message {
-  color: var(--plum);
+  color: var(--danger);
   font-size: 13px;
   margin-bottom: var(--space-1);
+}
+
+.form-message--success {
+  color: var(--success);
 }
