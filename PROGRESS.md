@@ -647,3 +647,63 @@ User caught one inconsistency: the hero's own "Sign up" CTA (separate from the n
 Also added two small hover touches: the "Circle" nav logo's text now shifts to coral on hover (a `transition: color` on the span, triggered via `nav a.nav-logo:hover span`) so it visibly reads as clickable instead of just being plain bold text; and the match-card (purple box) now lifts up slightly and deepens its shadow on hover (`transform: translateY(-6px)` + a stronger `box-shadow`, both transitioned smoothly) as a small "this is alive" touch, applying to every match-card on the site (landing hero and dashboard) since they all share the same class.
 
 **Verified for real:** confirmed the hero shows "Sign out" while logged in, clicked it for real, and confirmed it correctly cleared the token and landed back on `/login`.
+
+### Part B — Dashboard width + Friends/Friend-Requests layout (went through two real redesigns)
+
+First attempt: `.page-container` (only ever used by `DashboardPage` — confirmed via a repo-wide search before touching it) widened 640px→960px, Friends and Friend Requests wrapped in a flex row (Friends narrower, Requests wider). Worked, but the user's actual mental picture was different — a real three-column dashboard: Friends as a persistent rail on the left, Friend Requests as a rail on the right, and *all* the other sections (Send Friend Request, Availability, Matches, Outing Invites, Create Outing) forming one center column between them, not just Friends/Requests paired at the top with everything else stacked below.
+
+Rebuilt as a genuine CSS Grid: `.dashboard-layout { display: grid; grid-template-columns: 200px minmax(0,1fr) 240px; }` — Friends and Friend Requests as fixed-width side rails, everything else moved into a new `.dashboard-center` flex column in the middle track. (Right rail's 240px vs. left's 200px is deliberate — Friend Requests needs room for Accept/Decline side-by-side without cramping, the exact tradeoff flagged as a concern before building it.) A `--no-right-rail` modifier drops to two tracks when there are no pending requests, so Friends doesn't end up looking like an orphaned column.
+
+First pass at this also briefly explored a **sticky-rail** variant (rails pin in place while you scroll the center) as a second option to compare against a plain static one. Real bug hit building it: `align-items: start` on the grid shrinks each rail's box down to its own content height, leaving `position: sticky` no room to move within — fixed (before it was decided against) by splitting each rail into an outer stretched grid cell plus an inner sticky card, the standard "sticky sidebar in CSS Grid" pattern. Verified the fix was real, not just visually assumed: `getBoundingClientRect()` at two different `scrollY` values both returned the same pinned `top: 96`, proving it actually stuck — needed because this tool's own browser pane doesn't reliably repaint mid-scroll for a screenshot (same limitation hit earlier with the match animation), so a screenshot alone right after scrolling wasn't trustworthy evidence.
+
+User picked **static**, not sticky — but caught a real remaining problem even in static: the rail cards were only as tall as their own content, leaving visible blank page background below them while the center column kept going, and asked to fix that specifically. Fixed by dropping the sticky-only wrapper split (no longer needed) and letting the rails be direct grid children again — CSS Grid's default `align-items: stretch` (simply not overriding it) then stretches each rail's own visible card down to match the tallest column's height, so their white background/border fills the space instead of leaving it blank. Also caught the center column was too narrow relative to the two rails (456px of a 960px page, well under half) despite the goal being to keep the middle "big" — fixed by widening `.page-container` again, 960px→1200px, giving the center ~696px without shrinking either rail.
+
+**Verified for real:** confirmed in the browser that both rails' backgrounds now stretch the full height to match the center column with no blank gap below them; confirmed the center column measures ~696px of the 1200px container (up from 456/960); confirmed at 375px mobile width everything correctly drops to one stacked column with rails back to natural (unstretched) height.
+
+### Part B, round 3 — equal rails, wider middle, real overflow fix, then a legitimate second look at the width
+
+User picked the earlier full-stretch treatment over content-height, but flagged it back with an annotated screenshot: rails uneven width (200/240), the middle still not wide enough, a lot of unused cream margin outside the container on their monitor, and the original text-overflow bug still real in the live app (a mockup had shown the fix, but it hadn't been ported into actual CSS yet). Before touching code, built three static comparison mockups on a design canvas (content-height / full-stretch / a modest partial-fill) since the user asked to see pictures before another live iteration — the user picked the partial-fill direction (Option 3).
+
+Implemented for real: `.dashboard-layout` grid columns changed to equal `260px minmax(0,1fr) 260px`, rails given a flat `min-height: 320px` (not tied to the center's actual height — a fixed value, same trick the mockup used) with `align-items: start` so they no longer auto-stretch to full height, and a small `+ Add another friend` prompt line pinned to the bottom of the Friends card via `margin-top: auto` so the extra height reads as intentional. `.page-container` widened 1200px→1800px per "we want them touching the side." The real overflow fix: `.dashboard-rail-left .list-row` switched to `display: block` + `text-overflow: ellipsis` (Friends rows are plain text, safe to convert from flex), and for Friend Requests (which has an email span *and* a button-group span sharing the row) only the email span gets `min-width: 0` + ellipsis while `.row-actions` gets `flex-shrink: 0`, so buttons never get squeezed.
+
+Asked for an honest opinion afterward, unprompted by any complaint: 1800px genuinely edge-to-edge looked wrong, not because "wide" is bad but because the actual content (short lists, one-line form fields) is sparse — a 680px-wide email input just looks empty, unlike apps (Gmail/Slack) that fill real width with real content like tables. Recommended and applied a middle ground: `.page-container` pulled back 1800px→1400px, and — the more important fix — capped `.dashboard-center input[...]` at `max-width: 420px` so form fields stay a sane size regardless of how wide the container is, instead of chasing the "right" container width forever.
+
+**Verified for real:** confirmed equal 260px/260px/320px-min rails, confirmed the Friend Requests row still shows full-size Accept/Decline buttons with the email truncating first, confirmed the "+ Add another friend" line renders, confirmed inputs no longer stretch edge-to-edge inside the wide center column, confirmed 375px mobile still stacks cleanly with rail min-height correctly dropping to 0.
+
+### Part B, round 4 — the real fix: stop fighting the content, merge to one sidebar
+
+Even with the 420px input cap, the *section boxes themselves* (Send Friend Requests, Availability) still stretched to fill the wide center track, leaving big blank interior space to the right of the actual input — same underlying problem as before, just moved location again. Recognized this as a structural mismatch, not a tuning problem: three fixed-width columns (two rails + a stretchy center) fundamentally fights content this sparse (a short list, one-line forms), no matter how many individual elements get capped.
+
+Rebuilt around a different, equally common pattern the user hadn't heard of by name but asked about: one combined sidebar (Friends and Friend Requests merged into a single card, divided by a plain border) next to one main column, mirroring how Gmail/Slack/Notion structure a sidebar + content pane — explained the tradeoffs of a few well-known patterns (fixed-width centered content, sidebar+main, full-bleed dashboards, tabs) before building, since the user asked what's popular and isn't a web developer.
+
+The actual root-cause fix: stopped forcing `.dashboard-layout` to stretch to fill `.page-container`'s width. `width: fit-content` + `margin: 0 auto` on the grid means it's now sized to exactly what its tracks need (sidebar + gap + center) and centered — any leftover screen width becomes ordinary page margin *outside* the content, the same way most content-focused websites work, instead of forced dead space *inside* a box. Dropped the per-rail `min-height`/stretch hacks entirely — no longer needed once the box isn't being stretched into space it doesn't need.
+
+**Verified for real:** measured the actual rendered grid — 916px total (260px sidebar + 16px gap + 640px center), centered with ~175–190px roughly-equal margin on both sides at a 1280px viewport; confirmed the merged sidebar shows Friends then a divider then Friend Requests with no forced empty gap; reconfirmed mobile still stacks correctly.
+
+### Part B, round 5 — widen it a bit more, and match the nav to it
+
+User liked the sidebar+main structure but wanted the whole thing (and the nav bar, which had its own separate `max-width: 1100px` that didn't match the dashboard content's 916px) a bit wider, eating into some of that new margin rather than leaving it all as blank space. Bumped `nav`'s `max-width` 1100px→1120px and grew the dashboard grid's center track 640px→844px (sidebar stays 260px) so the whole content block is exactly 1120px too — nav and dashboard content now share the same width and left edge instead of being two different, mismatched widths.
+
+**Verified for real:** measured both `nav` and `.dashboard-layout` at exactly 1120px wide with matching left offsets at a 1280px viewport (margin dropped from ~180px to ~72px per side) — confirmed by the user as the version to keep.
+
+---
+
+## RESUME HERE — Phase B is done and committed. Next: Phase C.
+
+**Status**: Phase B is fully done — final shape is a single merged Friends/Friend-Requests sidebar (260px) beside one main column (844px), the whole block naturally sized and centered (not stretched to fill the screen), nav widened to match at 1120px. Went through five real rounds of feedback before landing (flex row → 3-column stretch/sticky exploration → equal partial-fill rails → sidebar merge fixing the root cause → final width match with nav). Committed. Nothing half-finished.
+
+**Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:
+
+**Keep — do these next, in order:**
+- **C** — Real bug fixes: refetch Friends after accept/decline, refetch Matches after posting availability; prevent duplicate friend requests; fix old/expired availability still counting as a match; fix timezone handling in the overlap check (`datetime-local` sends naive values, zero timezone awareness anywhere right now).
+- **D** — Add an actual "your outings" section (accepted invites currently vanish with nowhere to see them).
+- **H, partial** — real pytest tests + GitHub Actions CI. Cheap relative to payoff, reads well on a CV even if small.
+
+**Recommended to defer past the deadline (not cancelled — just not now), and say so explicitly in the README as known next steps:**
+- **F** — Username field. Explicitly the biggest/most invasive piece (model + migration + schema + every `.email` display site) — high effort, low payoff for a demo, and a rushed migration under time pressure is exactly where real bugs happen.
+- **E** — Richer match-card details. Pure polish, already slated for "after everything else."
+- Dark mode — cosmetic, skip.
+- Actual deployment — flagged as the single highest-variance item since day one (see the 2026-09-21 deadline note above); if time runs out, cut this first, keep a polished local demo + README + screenshots. Deployment-safety prep (env-configurable API URL, hiding the DB port, a real JWT secret) only matters once deployment is actually happening, so it waits alongside it.
+- **G (user's own work)** — the landing page's "how it works" section, whenever they get to it.
+
+**Workflow reminder**: one piece at a time, explain what changed in plain language after each, commit, then move to the next — user confirms before continuing.

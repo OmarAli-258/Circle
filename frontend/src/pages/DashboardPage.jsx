@@ -288,92 +288,99 @@ function DashboardPage() {
         </div>
       </div>
 
-      <div className="dashboard-section">
-        <h3>Friends</h3>
-        {friends.length === 0 && <p className="empty-state">No friends yet — send a request below to get started.</p>}
-        {friends.map(friend => <p className="list-row" key ={friend.id}> {friend.email} </p>)}
-      </div>
-
-      {friendsList.length > 0 && (
-      <div className="dashboard-section">
-        <h3>Friend Requests</h3>
-        {friendsList.map(friend_request => ( <p className="list-row" key = {friend_request.id}>
-          <span>{friend_request.requester_email}</span>
-          <span className="row-actions">
-            <button onClick={() => handleAccept(friend_request.id)}>Accept</button>
-            <button className="btn-secondary" onClick={() => handleDecline(friend_request.id)}>Decline</button>
-          </span>
-        </p>
-      ))}
-      </div>
-      )}
-      <div className ="dashboard-section">
-      <h3>Send Friend Requests</h3>
-      <form onSubmit={handleSentInformation}>
-        <label htmlFor="request-email">Friend's email</label>
-        <input id="request-email" type="email" value={requestEmail} onChange={(e) => setRequestEmail(e.target.value)} />
-        <button type="submit" disabled={sendingRequest}>{sendingRequest ? "Sending..." : "Send"}</button>
-      </form>
-      {message && <p className={messageIsError ? "form-message" : "form-message form-message--success"}>{message}</p>}
-      </div>
-      <div className="dashboard-section">
-        <h3>Availability</h3>
-        <form onSubmit={handlePostAvailabilty}>
-          <label htmlFor="availability-start">Available from</label>
-          <input id="availability-start" type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} />
-          <label htmlFor="availability-end">Available until</label>
-          <input id="availability-end" type="datetime-local" value={availabilityEnd} onChange={(e) => setAvailabilityEnd(e.target.value)} />
-          <button type="submit" disabled={postingAvailability}>{postingAvailability ? "Posting..." : "Post"}</button>
-        </form>
-        {availabilityMessage && <p className={availabilityMessageIsError ? "form-message" : "form-message form-message--success"}>{availabilityMessage}</p>}
-      </div>
-      {matchedFriends.length > 0 && (
-      <div className="dashboard-section dashboard-section--plum">
-        <h3>Matches</h3>
-        {matchedFriends.map(friend => (
-          <div key={friend.id} data-friend-id={friend.id} ref={observeMatchCard} className={newMatchIds.includes(friend.id) && visibleMatchIds.includes(friend.id) ? "match-card match-card--animate" : "match-card match-card--settled"}>
-            <p className="match-card-label">You're both free</p>
-            <div className="match-card-avatars">
-              <div className="avatar avatar-coral match-avatar-left">{currentUser?.email?.[0]?.toUpperCase()}</div>
-              <div className="avatar avatar-plum match-avatar-right">{friend.email[0].toUpperCase()}</div>
-            </div>
-            <p className="match-card-title">You and {friend.email} are free</p>
+      <div className="dashboard-layout">
+        <div className="dashboard-section dashboard-sidebar">
+          <div className="dashboard-sidebar-section">
+            <h3>Friends</h3>
+            {friends.length === 0 && <p className="empty-state">No friends yet — send a request below to get started.</p>}
+            {friends.map(friend => <p className="list-row" key ={friend.id}> {friend.email} </p>)}
           </div>
-        ))}
-      </div>
-      )}
-      {outingInvites.length > 0 && (
-      <div className="dashboard-section">
-      <h3>Outing Invites</h3>
-      {outingInvites.map(invite => (
-        <p className="list-row" key={invite.id}>
-          <span>{invite.outing_title}, {invite.outing_location}, {invite.outing_time}</span>
-          <span className="row-actions">
-            <button onClick={() => handleAcceptOuting(invite.id)}>Accept</button>
-            <button className="btn-secondary" onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
-          </span>
-        </p>
-      ))}
-      </div>
-      )}
-      <div className="dashboard-section dashboard-section--plum">
-        <h3>Create Outing</h3>
-        <form onSubmit={handleCreateOuting}>
-          <label htmlFor="outing-title">Title</label>
-          <input id="outing-title" type="text" value={outingTitle} onChange={(e) => setOutingTitle(e.target.value)} />
-          <label htmlFor="outing-time">When</label>
-          <input id="outing-time" type="datetime-local" value={proposedTime} onChange={(e) => setProposedTime(e.target.value)} />
-          <label htmlFor="outing-location">Location</label>
-          <input id="outing-location" type="text" value={outingLocation} onChange={(e) => setOutingLocation(e.target.value)} />
-          {friends.map(friend => (
-            <label key={friend.id}>
-              <input type="checkbox" checked={invitedFriends.includes(friend.id)} onChange={() => toggleInvitedFriends(friend.id)} />
-              {friend.email}
-            </label>
+
+          {friendsList.length > 0 && (
+          <div className="dashboard-sidebar-section dashboard-sidebar-section--divider">
+            <h3>Friend Requests</h3>
+            {friendsList.map(friend_request => ( <p className="list-row" key = {friend_request.id}>
+              <span>{friend_request.requester_email}</span>
+              <span className="row-actions">
+                <button onClick={() => handleAccept(friend_request.id)}>Accept</button>
+                <button className="btn-secondary" onClick={() => handleDecline(friend_request.id)}>Decline</button>
+              </span>
+            </p>
           ))}
-          <button type="submit" disabled={creatingOuting}>{creatingOuting ? "Creating..." : "Create Outing"}</button>
-        </form>
-        {outingMessage && <p className={outingMessageIsError ? "form-message" : "form-message form-message--success"}>{outingMessage}</p>}
+          </div>
+          )}
+        </div>
+
+        <div className="dashboard-center">
+          <div className ="dashboard-section">
+          <h3>Send Friend Requests</h3>
+          <form onSubmit={handleSentInformation}>
+            <label htmlFor="request-email">Friend's email</label>
+            <input id="request-email" type="email" value={requestEmail} onChange={(e) => setRequestEmail(e.target.value)} />
+            <button type="submit" disabled={sendingRequest}>{sendingRequest ? "Sending..." : "Send"}</button>
+          </form>
+          {message && <p className={messageIsError ? "form-message" : "form-message form-message--success"}>{message}</p>}
+          </div>
+          <div className="dashboard-section">
+            <h3>Availability</h3>
+            <form onSubmit={handlePostAvailabilty}>
+              <label htmlFor="availability-start">Available from</label>
+              <input id="availability-start" type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} />
+              <label htmlFor="availability-end">Available until</label>
+              <input id="availability-end" type="datetime-local" value={availabilityEnd} onChange={(e) => setAvailabilityEnd(e.target.value)} />
+              <button type="submit" disabled={postingAvailability}>{postingAvailability ? "Posting..." : "Post"}</button>
+            </form>
+            {availabilityMessage && <p className={availabilityMessageIsError ? "form-message" : "form-message form-message--success"}>{availabilityMessage}</p>}
+          </div>
+          {matchedFriends.length > 0 && (
+          <div className="dashboard-section dashboard-section--plum">
+            <h3>Matches</h3>
+            {matchedFriends.map(friend => (
+              <div key={friend.id} data-friend-id={friend.id} ref={observeMatchCard} className={newMatchIds.includes(friend.id) && visibleMatchIds.includes(friend.id) ? "match-card match-card--animate" : "match-card match-card--settled"}>
+                <p className="match-card-label">You're both free</p>
+                <div className="match-card-avatars">
+                  <div className="avatar avatar-coral match-avatar-left">{currentUser?.email?.[0]?.toUpperCase()}</div>
+                  <div className="avatar avatar-plum match-avatar-right">{friend.email[0].toUpperCase()}</div>
+                </div>
+                <p className="match-card-title">You and {friend.email} are free</p>
+              </div>
+            ))}
+          </div>
+          )}
+          {outingInvites.length > 0 && (
+          <div className="dashboard-section">
+          <h3>Outing Invites</h3>
+          {outingInvites.map(invite => (
+            <p className="list-row" key={invite.id}>
+              <span>{invite.outing_title}, {invite.outing_location}, {invite.outing_time}</span>
+              <span className="row-actions">
+                <button onClick={() => handleAcceptOuting(invite.id)}>Accept</button>
+                <button className="btn-secondary" onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
+              </span>
+            </p>
+          ))}
+          </div>
+          )}
+          <div className="dashboard-section dashboard-section--plum">
+            <h3>Create Outing</h3>
+            <form onSubmit={handleCreateOuting}>
+              <label htmlFor="outing-title">Title</label>
+              <input id="outing-title" type="text" value={outingTitle} onChange={(e) => setOutingTitle(e.target.value)} />
+              <label htmlFor="outing-time">When</label>
+              <input id="outing-time" type="datetime-local" value={proposedTime} onChange={(e) => setProposedTime(e.target.value)} />
+              <label htmlFor="outing-location">Location</label>
+              <input id="outing-location" type="text" value={outingLocation} onChange={(e) => setOutingLocation(e.target.value)} />
+              {friends.map(friend => (
+                <label key={friend.id}>
+                  <input type="checkbox" checked={invitedFriends.includes(friend.id)} onChange={() => toggleInvitedFriends(friend.id)} />
+                  {friend.email}
+                </label>
+              ))}
+              <button type="submit" disabled={creatingOuting}>{creatingOuting ? "Creating..." : "Create Outing"}</button>
+            </form>
+            {outingMessage && <p className={outingMessageIsError ? "form-message" : "form-message form-message--success"}>{outingMessage}</p>}
+          </div>
+        </div>
       </div>
     </div>
     </>
