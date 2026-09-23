@@ -291,6 +291,11 @@ nav span {
   font-weight: 600;
   font-size: 18px;
   color: var(--text);
+  transition: color 0.15s ease;
+}
+
+nav a.nav-logo:hover span {
+  color: var(--coral);
 }
 
 nav div {
@@ -319,6 +324,20 @@ nav a[href="/login"]:hover {
 nav a[href="/signup"] {
   background: var(--coral);
   color: #fff;
+}
+
+nav a.nav-logo {
+  padding: 0;
+  border-radius: 0;
+}
+
+nav a[href="/dashboard"] {
+  background: var(--coral);
+  color: #fff;
+}
+
+nav a[href="/dashboard"]:hover {
+  background: var(--coral-hover);
 }
 
 nav a[href="/signup"]:hover {
@@ -359,7 +378,8 @@ nav a[href="/signup"]:hover {
   margin: 0 0 28px;
 }
 
-.hero-text a {
+.hero-text a,
+.hero-text button {
   display: inline-block;
   background: var(--coral);
   color: #fff;
@@ -371,11 +391,13 @@ nav a[href="/signup"]:hover {
   transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
-.hero-text a:hover {
+.hero-text a:hover,
+.hero-text button:hover {
   background: var(--coral-hover);
 }
 
-.hero-text a:active {
+.hero-text a:active,
+.hero-text button:active {
   transform: scale(0.97);
 }
 
@@ -397,6 +419,12 @@ nav a[href="/signup"]:hover {
   width: 100%;
   box-shadow: 0 16px 40px rgba(140, 78, 125, 0.18);
   overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.match-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 44px rgba(140, 78, 125, 0.28);
 }
 
 .hero-image .match-card {

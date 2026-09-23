@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef} from "react"
-import {useNavigate} from "react-router-dom"
+import {useNavigate, Link} from "react-router-dom"
 function DashboardPage() {
   useEffect(() => {
     async function checkLogin(){
@@ -275,6 +275,10 @@ function DashboardPage() {
   }
 
   return (
+    <>
+    <nav>
+      <Link to="/" className="nav-logo"><span>Circle</span></Link>
+    </nav>
     <div className="page-container">
       <div className="page-header">
         <h2>Dashboard</h2>
@@ -372,6 +376,7 @@ function DashboardPage() {
         {outingMessage && <p className={outingMessageIsError ? "form-message" : "form-message form-message--success"}>{outingMessage}</p>}
       </div>
     </div>
+    </>
   )
 }
 export default DashboardPage

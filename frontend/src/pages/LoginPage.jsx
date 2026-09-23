@@ -19,7 +19,7 @@ function LoginPage() {
     const data = await response.json()
     if (response.ok) {
       localStorage.setItem("token", data.access_token)
-      navigate("/dashboard")
+      navigate("/")
     } else {
       setMessage(data.detail)
       setIsSubmitting(false)

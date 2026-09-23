@@ -1,16 +1,29 @@
-import { Link } from "react-router-dom"
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 
 function LandingPage() {
-    
-    
-    
+    const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("token"))
+    const navigate = useNavigate()
+
+    function handleSignOut() {
+        localStorage.removeItem("token")
+        setIsLoggedIn(false)
+        navigate("/login")
+    }
+
     return (
         <div>
             <nav>
-                <span>Circle</span>
+                <Link to="/" className="nav-logo"><span>Circle</span></Link>
                 <div>
-                    <Link to="/login">Login</Link>
-                    <Link to="/signup">Sign up</Link>
+                    {isLoggedIn ? (
+                        <Link to="/dashboard">Dashboard</Link>
+                    ) : (
+                        <>
+                            <Link to="/login">Login</Link>
+                            <Link to="/signup">Sign up</Link>
+                        </>
+                    )}
                 </div>
             </nav>
             <section className="hero">
@@ -19,7 +32,11 @@ function LandingPage() {
                         <h1>Stop planning hangouts over 50-message-long group chats</h1>
                         <p>Circle shows you the moment your free time and your friend's overlap — no back
                             and forth, no one left on read.</p>
-                        <Link to="/signup">Sign up</Link>
+                        {isLoggedIn ? (
+                            <button onClick={handleSignOut}>Sign out</button>
+                        ) : (
+                            <Link to="/signup">Sign up</Link>
+                        )}
                     </div>
                     <div className="hero-image">
                         <div className="match-card">
