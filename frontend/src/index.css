@@ -195,8 +195,10 @@ button:disabled {
 
 .list-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   background: var(--cream-deep);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
@@ -205,6 +207,19 @@ button:disabled {
 
 .list-row:last-child {
   margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+  }
+
+  .page-header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 .row-actions {
