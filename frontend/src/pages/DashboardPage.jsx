@@ -244,7 +244,7 @@ function DashboardPage() {
   }
 
   return (
-    <div>
+    <div className="page-container">
       <div className="page-header">
         <h2>Dashboard</h2>
         <div className="page-header-right">
