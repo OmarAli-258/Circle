@@ -26,7 +26,6 @@ function LandingPage() {
                             <p className="match-card-label">You're both free</p>
                             <div className="match-card-avatars">
                                 <div className="avatar avatar-coral">Y</div>
-                                <span className="match-card-plus">+</span>
                                 <div className="avatar avatar-plum">J</div>
                             </div>
                             <p className="match-card-title">You and Jordan are free</p>

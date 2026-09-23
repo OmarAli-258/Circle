@@ -414,7 +414,6 @@ nav a[href="/signup"]:hover {
 .match-card-avatars {
   display: flex;
   align-items: center;
-  gap: 12px;
   margin-bottom: 16px;
 }
 
@@ -429,6 +428,11 @@ nav a[href="/signup"]:hover {
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 15px;
+  border: 2px solid var(--plum-bg);
+}
+
+.match-card-avatars .avatar + .avatar {
+  margin-left: -16px;
 }
 
 .avatar-coral {
@@ -437,13 +441,6 @@ nav a[href="/signup"]:hover {
 
 .avatar-plum {
   background: var(--plum);
-}
-
-.match-card-plus {
-  color: var(--plum);
-  font-size: 18px;
-  width: 24px;
-  text-align: center;
 }
 
 .match-card-title {
@@ -479,20 +476,20 @@ nav a[href="/signup"]:hover {
 }
 
 .match-card--animate .match-avatar-left {
-  animation: match-slide-in-left 0.8s ease-out forwards;
+  animation: match-slide-in-left 2.2s ease-out 0.6s both;
 }
 
 .match-card--animate .match-avatar-right {
-  animation: match-slide-in-right 0.8s ease-out forwards;
+  animation: match-slide-in-right 2.2s ease-out 0.6s both;
 }
 
 @keyframes match-slide-in-left {
-  0% { transform: translateX(-30px); }
+  0% { transform: translateX(-80px); }
   100% { transform: translateX(0); }
 }
 
 @keyframes match-slide-in-right {
-  0% { transform: translateX(30px); }
+  0% { transform: translateX(80px); }
   100% { transform: translateX(0); }
 }
 
