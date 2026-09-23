@@ -694,10 +694,21 @@ User liked the sidebar+main structure but wanted the whole thing (and the nav ba
 
 **Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:
 
-**Keep — do these next, in order:**
-- **C** — Real bug fixes: refetch Friends after accept/decline, refetch Matches after posting availability; prevent duplicate friend requests; fix old/expired availability still counting as a match; fix timezone handling in the overlap check (`datetime-local` sends naive values, zero timezone awareness anywhere right now).
-- **D** — Add an actual "your outings" section (accepted invites currently vanish with nowhere to see them).
-- **H, partial** — real pytest tests + GitHub Actions CI. Cheap relative to payoff, reads well on a CV even if small.
+**Keep — concrete day-by-day plan (2 days, ~3hrs/day, ~6hrs total):**
+
+**Day 1 — Phase C, real bug fixes (~2–2.5 hrs total):**
+1. Refetch Friends list after accept/decline — right now only the pending-requests list refetches, so a newly-accepted friend doesn't show up in Friends until a full page reload. (~15–20 min)
+2. Refetch Matches after posting availability — posting a window doesn't re-check for a match until the next full page load. (~15–20 min)
+3. Prevent duplicate friend requests — no check today before creating a new one; add a lookup for an existing pending/accepted request between the two users before inserting. (~20–30 min)
+4. Fix old/expired availability still counting as a match — the matching query has zero time filtering right now; add a check that a window's `end_time` hasn't already passed. (~30–45 min)
+5. Timezone handling in the overlap check — `datetime-local` inputs send a naive value with no timezone info at all right now. Real fix touches both sides: convert the local time to UTC in the frontend before `POST`ing, and confirm the backend treats stored/compared times consistently as UTC. This is the trickiest one of the five — budget the most time and expect a genuine debugging pass, not a one-line fix. (~45–60 min)
+
+**Day 2 — Phase D + tests/CI (~2–2.5 hrs total), then stop and call it CV-ready:**
+6. **Phase D** — add an actual "your outings" section: check what the backend already exposes for accepted outings (may need a small new endpoint), then a frontend section listing them — accepted outings currently vanish with nowhere to see them again. (~60–90 min)
+7. **Tests/CI** — a handful of real pytest tests on core logic (`overlaps()`, maybe the new duplicate-friend-request check), plus a GitHub Actions workflow file to run them on push. Cheap relative to payoff, reads well on a CV even if small. (~45–60 min)
+8. Update the README: note F/E/dark-mode/deployment as explicit "known next steps," not silently missing.
+
+If Day 1 runs long (likely, given item 5), let item 6 slide rather than rushing timezone handling — a correct, well-tested Phase C matters more for a demo than a finished Phase D.
 
 **Recommended to defer past the deadline (not cancelled — just not now), and say so explicitly in the README as known next steps:**
 - **F** — Username field. Explicitly the biggest/most invasive piece (model + migration + schema + every `.email` display site) — high effort, low payoff for a demo, and a rushed migration under time pressure is exactly where real bugs happen.
