@@ -581,3 +581,11 @@ Built by Claude (CSS, per the established split): the `#root` global max-width w
 **Verified for real:** confirmed the screenshot actually loads (`200 OK`, real natural dimensions, `complete: true`, checked via the DOM/network directly after a screenshot-tool rendering glitch gave a misleading blank view) — side-by-side split renders correctly on desktop width and correctly stacks to a single column on a 375px mobile viewport, zero console errors either way.
 
 Next: "how it works" section, then decide on deployment/tests/CI with the remaining time.
+
+### Landing page, part 2 — replaced the dashboard screenshot with a crafted "match" card
+
+User pushback, and correct: a literal screenshot of the busy, mostly-white dashboard form wasn't distinctive, and felt redundant since that page is one click away anyway. Replaced it with a small, hand-built card recreating just the one moment the whole product is actually about — two colored initial-avatars (coral/plum, matching the site's own palette and the favicon's two-overlapping-circles idea), "You and Jordan are free," a time. Still "real product, not stock art" in spirit — it's literally this app's own UI language, just curated to show the payoff instead of a whole busy page — plus a slow CSS `box-shadow` pulse animation (`@keyframes`, `animation: ... infinite`) so it reads as "something just happened" rather than a static image.
+
+Built directly by Claude given the visual-design nature of the task (mocked up first, user approved, then implemented) rather than taught line by line — consistent with how the color-palette and font decisions earlier in the CSS pass were handled. Removed the now-fully-unused `dashboard-preview.png` from `frontend/public/` afterward rather than leaving dead weight behind.
+
+**Verified for real:** confirmed the new match-card renders correctly and the pulse animation is applied on both desktop (side-by-side hero split) and a 375px mobile viewport (stacked, centered), zero console errors either way.

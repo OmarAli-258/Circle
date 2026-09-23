@@ -22,7 +22,16 @@ function LandingPage() {
                         <Link to="/signup">Sign up</Link>
                     </div>
                     <div className="hero-image">
-                        <img src="/dashboard-preview.png" alt="Dashboard preview showing matching with friends"/>
+                        <div className="match-card">
+                            <p className="match-card-label">You're both free</p>
+                            <div className="match-card-avatars">
+                                <div className="avatar avatar-coral">Y</div>
+                                <span className="match-card-plus">+</span>
+                                <div className="avatar avatar-plum">J</div>
+                            </div>
+                            <p className="match-card-title">You and Jordan are free</p>
+                            <p className="match-card-time">Saturday, 6-8pm</p>
+                        </div>
                     </div>
                 </div>
             </section>
