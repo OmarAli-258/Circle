@@ -147,7 +147,28 @@ function DashboardPage() {
 
   const [matchedFriends, setMatchedFriends] =useState([])
   const [newMatchIds, setNewMatchIds] = useState([])
+  const [visibleMatchIds, setVisibleMatchIds] = useState([])
   const seenAtLoadRef = useRef(null)
+  const matchObserverRef = useRef(null)
+
+  useEffect(() => {
+    matchObserverRef.current = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = Number(entry.target.dataset.friendId)
+          setVisibleMatchIds(prev => prev.includes(id) ? prev : [...prev, id])
+          matchObserverRef.current.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0.5 })
+    return () => matchObserverRef.current.disconnect()
+  }, [])
+
+  function observeMatchCard(el) {
+    if (el && matchObserverRef.current) {
+      matchObserverRef.current.observe(el)
+    }
+  }
   useEffect(()=>{
     async function displayMatched() {
       const token = localStorage.getItem("token")
@@ -306,7 +327,7 @@ function DashboardPage() {
       <div className="dashboard-section dashboard-section--plum">
         <h3>Matches</h3>
         {matchedFriends.map(friend => (
-          <div key={friend.id} className={newMatchIds.includes(friend.id) ? "match-card match-card--animate" : "match-card match-card--settled"}>
+          <div key={friend.id} data-friend-id={friend.id} ref={observeMatchCard} className={newMatchIds.includes(friend.id) && visibleMatchIds.includes(friend.id) ? "match-card match-card--animate" : "match-card match-card--settled"}>
             <p className="match-card-label">You're both free</p>
             <div className="match-card-avatars">
               <div className="avatar avatar-coral match-avatar-left">{currentUser?.email?.[0]?.toUpperCase()}</div>

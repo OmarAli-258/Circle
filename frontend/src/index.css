@@ -396,6 +396,7 @@ nav a[href="/signup"]:hover {
   max-width: 320px;
   width: 100%;
   box-shadow: 0 16px 40px rgba(140, 78, 125, 0.18);
+  overflow: hidden;
 }
 
 .hero-image .match-card {
