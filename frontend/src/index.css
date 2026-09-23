@@ -392,7 +392,7 @@ nav a[href="/signup"]:hover {
   background: var(--plum-bg);
   border: 2px solid var(--plum);
   border-radius: 16px;
-  padding: 24px;
+  padding: 24px 24px 24px 30px;
   max-width: 320px;
   width: 100%;
   box-shadow: 0 16px 40px rgba(140, 78, 125, 0.18);
@@ -485,12 +485,12 @@ nav a[href="/signup"]:hover {
 }
 
 @keyframes match-slide-in-left {
-  0% { transform: translateX(-80px); }
+  0% { transform: translateX(-22px); }
   100% { transform: translateX(0); }
 }
 
 @keyframes match-slide-in-right {
-  0% { transform: translateX(80px); }
+  0% { transform: translateX(22px); }
   100% { transform: translateX(0); }
 }
 
