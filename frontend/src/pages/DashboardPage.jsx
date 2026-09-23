@@ -24,6 +24,11 @@ function DashboardPage() {
       const response = await fetch("http://localhost:8000/me", {
       headers : {"Authorization": `Bearer ${token}`},
       })
+      if (!response.ok) {
+        localStorage.removeItem("token")
+        navigate("/login")
+        return
+      }
       const data = await response.json()
       setCurrentUser(data)
     } 
@@ -38,6 +43,11 @@ function DashboardPage() {
       const response = await fetch("http://localhost:8000/friends", {
         headers: {"Authorization": `Bearer ${token}` },
       })
+      if (!response.ok) {
+        localStorage.removeItem("token")
+        navigate("/login")
+        return
+      }
       const data = await response.json()
       setFriends(data)
     }
@@ -50,6 +60,11 @@ function DashboardPage() {
     const response = await fetch("http://localhost:8000/friend_requests/pending", {
       headers: {"Authorization" : `Bearer ${token}` },
     })
+    if (!response.ok) {
+      localStorage.removeItem("token")
+      navigate("/login")
+      return
+    }
     const data = await response.json()
     setFriendsList(data)
   }
@@ -126,6 +141,11 @@ function DashboardPage() {
       const response = await fetch(`http://localhost:8000/availability/matches`, {
         headers : { "Authorization" : `Bearer ${token}`}
       })
+      if (!response.ok) {
+        localStorage.removeItem("token")
+        navigate("/login")
+        return
+      }
       const data = await response.json()
       setMatchedFriends(data)
     } 
@@ -139,6 +159,11 @@ function DashboardPage() {
     const response = await fetch(`http://localhost:8000/outing_invites/pending`, {
       headers : {"Authorization" : `Bearer ${token} `}
     })
+    if (!response.ok) {
+      localStorage.removeItem("token")
+      navigate("/login")
+      return
+    }
     const data = await response.json()
     setOutinginvites(data)
   }
