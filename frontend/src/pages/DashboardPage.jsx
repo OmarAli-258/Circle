@@ -1,4 +1,4 @@
-import {useState, useEffect} from "react"
+import {useState, useEffect, useRef} from "react"
 import {useNavigate} from "react-router-dom"
 function DashboardPage() {
   useEffect(() => {
@@ -146,6 +146,8 @@ function DashboardPage() {
   }
 
   const [matchedFriends, setMatchedFriends] =useState([])
+  const [newMatchIds, setNewMatchIds] = useState([])
+  const seenAtLoadRef = useRef(null)
   useEffect(()=>{
     async function displayMatched() {
       const token = localStorage.getItem("token")
@@ -160,7 +162,15 @@ function DashboardPage() {
       }
       const data = await response.json()
       setMatchedFriends(data)
-    } 
+
+      if (seenAtLoadRef.current === null) {
+        seenAtLoadRef.current = JSON.parse(localStorage.getItem("seenMatchIds") || "[]")
+      }
+      const seenMatchIds = seenAtLoadRef.current
+      const newIds = data.filter(friend => !seenMatchIds.includes(friend.id)).map(friend => friend.id)
+      setNewMatchIds(newIds)
+      localStorage.setItem("seenMatchIds", JSON.stringify([...seenMatchIds, ...newIds]))
+    }
     displayMatched()
     }, [])
   
@@ -295,7 +305,17 @@ function DashboardPage() {
       {matchedFriends.length > 0 && (
       <div className="dashboard-section dashboard-section--plum">
         <h3>Matches</h3>
-        {matchedFriends.map(friend => <p className="list-row" key={friend.id}>{friend.email}</p>)}
+        {matchedFriends.map(friend => (
+          <div key={friend.id} className={newMatchIds.includes(friend.id) ? "match-card match-card--animate" : "match-card match-card--settled"}>
+            <p className="match-card-label">You're both free</p>
+            <div className="match-card-avatars">
+              <div className="avatar avatar-coral match-avatar-left">{currentUser?.email?.[0]?.toUpperCase()}</div>
+              <span className="match-card-plus">+</span>
+              <div className="avatar avatar-plum match-avatar-right">{friend.email[0].toUpperCase()}</div>
+            </div>
+            <p className="match-card-title">You and {friend.email} are free</p>
+          </div>
+        ))}
       </div>
       )}
       {outingInvites.length > 0 && (

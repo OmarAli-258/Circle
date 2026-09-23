@@ -396,6 +396,9 @@ nav a[href="/signup"]:hover {
   max-width: 320px;
   width: 100%;
   box-shadow: 0 16px 40px rgba(140, 78, 125, 0.18);
+}
+
+.hero-image .match-card {
   animation: match-pulse 2.4s ease-in-out infinite;
 }
 
@@ -464,6 +467,33 @@ nav a[href="/signup"]:hover {
   50% {
     box-shadow: 0 16px 48px rgba(140, 78, 125, 0.35);
   }
+}
+
+.dashboard-section .match-card {
+  max-width: none;
+  margin-bottom: var(--space-1);
+}
+
+.dashboard-section .match-card:last-child {
+  margin-bottom: 0;
+}
+
+.match-card--animate .match-avatar-left {
+  animation: match-slide-in-left 0.8s ease-out forwards;
+}
+
+.match-card--animate .match-avatar-right {
+  animation: match-slide-in-right 0.8s ease-out forwards;
+}
+
+@keyframes match-slide-in-left {
+  0% { transform: translateX(-30px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes match-slide-in-right {
+  0% { transform: translateX(30px); }
+  100% { transform: translateX(0); }
 }
 
 @media (max-width: 800px) {
