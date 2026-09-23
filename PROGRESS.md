@@ -535,3 +535,17 @@ Screenshots needed a real device: populated a test dashboard with a pending frie
 **Not yet resolved:** user still can't see the images rendering wherever they're currently viewing the README — most likely viewing the raw markdown source in an editor rather than a rendered preview (e.g. VS Code's Markdown Preview, `Ctrl+Shift+V`), or looking at GitHub.com before this was pushed there. Diagnosis handed off, not yet confirmed fixed — pick this up first next session.
 
 Also identified (not yet acted on) a longer list of research-backed suggestions for the "recruiter impressed" goal: empty states for empty lists, distinct success/error message styling, button hover/active transitions, an actual mobile-width check, a small pre-login landing page, reconsidering deployment's stretch-goal status, and a multi-column grid layout on larger screens. Prioritized in that rough order by cost-to-value, with the README being the highest-value/lowest-cost item — now done.
+
+## 2026-09-23
+
+### README image issue resolved — was never actually broken
+
+Confirmed: the images, paths, and files were all correct the whole time. User was viewing `README.md` in VS Code's plain text editor tab, which never renders markdown (images show as literal `![alt](path)` text) — the fix was simply opening the rendered preview (`Ctrl+Shift+V`). No code or file changes needed.
+
+### Empty states — a deliberate split, not a uniform treatment
+
+Discussed the actual purpose of an empty state first: it's not about making empty space look full, it's about removing the ambiguity between "correctly empty" and "broken." Landed on a split rather than one blanket approach, reasoned per section: **Friends** gets a real empty-state message (`"No friends yet — send a request below to get started."`, written as an invitation rather than an apology — bare "No friends" was avoided on purpose) since it's a core, always-relevant identity list even for a brand-new user. **Friend Requests**, **Matches**, and **Outing Invites** instead hide their entire card when empty — all three are notification/pending-action-style lists that are empty most of the time for most users, so showing a permanent empty card year-round is just clutter. The **Matches** case has a nice bonus justification tying back to the project's own original design idea: the "mutual reveal" concept was always about showing nothing until both people are actually free at the same time, so hiding the section until a real match exists is thematically consistent, not just a style choice.
+
+Implemented as conditional rendering (`{list.length > 0 && (...)}` wrapping the whole card, versus `{list.length === 0 && <p>...</p>}` for the one section that keeps showing) — the same `&&` pattern used since the very first `{currentUser && <p>...}` line, just applied to whole sections instead of single lines.
+
+**Verified for real:** created a brand-new test account with zero friends/requests/matches/invites, confirmed Friends showed the invitation message and the other three sections were completely absent from the page; then switched to an account with real data in all four categories and confirmed every section rendered normally — no regression, zero console errors either way.

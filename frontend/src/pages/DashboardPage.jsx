@@ -212,9 +212,11 @@ function DashboardPage() {
 
       <div className="dashboard-section">
         <h3>Friends</h3>
+        {friends.length === 0 && <p className="empty-state">No friends yet — send a request below to get started.</p>}
         {friends.map(friend => <p className="list-row" key ={friend.id}> {friend.email} </p>)}
       </div>
 
+      {friendsList.length > 0 && (
       <div className="dashboard-section">
         <h3>Friend Requests</h3>
         {friendsList.map(friend_request => ( <p className="list-row" key = {friend_request.id}>
@@ -226,6 +228,7 @@ function DashboardPage() {
         </p>
       ))}
       </div>
+      )}
       <div className ="dashboard-section">
       <h3>Send Friend Requests</h3>
       <form onSubmit={handleSentInformation}>
@@ -246,10 +249,13 @@ function DashboardPage() {
         </form>
         {availabilityMessage && <p>{availabilityMessage}</p>}
       </div>
+      {matchedFriends.length > 0 && (
       <div className="dashboard-section dashboard-section--plum">
         <h3>Matches</h3>
         {matchedFriends.map(friend => <p className="list-row" key={friend.id}>{friend.email}</p>)}
       </div>
+      )}
+      {outingInvites.length > 0 && (
       <div className="dashboard-section">
       <h3>Outing Invites</h3>
       {outingInvites.map(invite => (
@@ -262,6 +268,7 @@ function DashboardPage() {
         </p>
       ))}
       </div>
+      )}
       <div className="dashboard-section dashboard-section--plum">
         <h3>Create Outing</h3>
         <form onSubmit={handleCreateOuting}>

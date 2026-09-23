@@ -143,6 +143,12 @@ button:hover {
   color: var(--plum);
 }
 
+.empty-state {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
 .dashboard-section--plum button:not(.btn-secondary) {
   background: var(--plum);
 }
