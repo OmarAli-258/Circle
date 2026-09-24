@@ -11,9 +11,17 @@ Organizing a hangout usually means a group chat, everyone slowly replying with t
 ## Features
 
 - **Auth** — signup/login with bcrypt-hashed passwords and JWT sessions
-- **Friends** — send/accept/decline friend requests by email
-- **Availability** — post a free-time window, get matched automatically with any friend whose window overlaps
-- **Outings** — propose an outing to a set of friends, accept/decline invites
+- **Friends** — send/accept/decline friend requests by email, remove a friend later
+- **Availability** — post a free-time window, remove it if plans change, get matched automatically with any friend whose window overlaps (showing the exact overlapping time, not just that a match exists)
+- **Outings** — propose an outing to a set of friends, accept/decline invites, jump straight from a match into a pre-filled outing with "Plan something," see confirmed plans in one place, leave or delete an outing later
+- **Display names** — an optional username shown in place of email everywhere identity appears, falling back to email when unset
+- **Dark mode** — follows your OS/browser setting automatically, with a manual toggle in the nav
+
+## Testing & reliability
+
+- **Automated tests** (`pytest`) — unit tests on core logic plus real integration tests using FastAPI's `TestClient` against the actual app (signup → friend → match → outing → accept → leave/delete, end to end)
+- **CI** (GitHub Actions) — every push runs the full test suite and a frontend lint + build check
+- **Database-level safeguards against race conditions** — a partial unique index prevents two near-simultaneous requests from creating duplicate active friendships, a unique constraint prevents duplicate outing invites, and outing creation is a single atomic transaction so a mid-request failure can't leave an outing with no invites
 
 ## Screenshots
 
@@ -25,7 +33,7 @@ Organizing a hangout usually means a group chat, everyone slowly replying with t
 
 - **Backend:** Python, FastAPI, SQLAlchemy, PostgreSQL, Alembic migrations, JWT auth
 - **Frontend:** React (Vite), react-router-dom, plain JavaScript/JSX, hand-written CSS
-- **Infra:** Docker Compose (backend + database), GitHub Actions (CI, planned)
+- **Infra:** Docker Compose (backend + database), GitHub Actions (CI)
 
 ## Getting started
 
@@ -58,7 +66,6 @@ Deliberately out of scope for now, but the current design leaves room for them:
 - **Circles** — sub-groups of friends (close friends vs. wider circle), for finer-grained availability sharing
 - **Location/venue presets** — attach preferred hangout spots to an outing proposal
 - **Recurring availability** — "free every Sunday afternoon" instead of one-off windows
-- Deployment, automated tests, CI
 
 ## Status
 
