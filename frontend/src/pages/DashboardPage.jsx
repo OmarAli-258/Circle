@@ -254,6 +254,24 @@ function DashboardPage() {
     displayCurrentOutings()
   }, [])
 
+  async function handleLeaveOuting(outingId) {
+    const token = localStorage.getItem("token")
+    await fetch(`http://localhost:8000/outings/${outingId}/leave`, {
+      method : "POST",
+      headers : {"Authorization" : `Bearer ${token}`}
+    })
+    displayCurrentOutings()
+  }
+
+  async function handleDeleteOuting(outingId) {
+    const token = localStorage.getItem("token")
+    await fetch(`http://localhost:8000/outings/${outingId}/delete`, {
+      method : "POST",
+      headers : {"Authorization" : `Bearer ${token}`}
+    })
+    displayCurrentOutings()
+  }
+
   async function handleAcceptOuting(id) {
     const token = localStorage.getItem("token")
     const response = await fetch(`http://localhost:8000/outing_invites/${id}/accept`,{
@@ -423,6 +441,13 @@ function DashboardPage() {
               <span>{outing.location} — {new Date(outing.proposed_time).toLocaleString()}</span>
               <span className="empty-state">
                 With {[outing.creator_email, ...outing.accepted_invitee_emails].filter((email, i, all) => all.indexOf(email) === i && email !== currentUser?.email).join(", ") || "just you so far"}
+              </span>
+              <span className="row-actions">
+                {outing.creator_email === currentUser?.email ? (
+                  <button className="btn-secondary" onClick={() => handleDeleteOuting(outing.id)}>Delete</button>
+                ) : (
+                  <button className="btn-secondary" onClick={() => handleLeaveOuting(outing.id)}>Leave</button>
+                )}
               </span>
             </div>
           ))}

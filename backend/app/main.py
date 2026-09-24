@@ -292,12 +292,14 @@ def my_outing_invites(current_user : User = Depends(get_current_user), db : Sess
 @app.get("/outings/current", response_model=list[CurrentOutingOut])
 def get_current_outings(current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     now = datetime.now(timezone.utc)
-    created_outings = db.query(Outing).filter(Outing.creator_id == current_user.id, Outing.proposed_time > now).all()
+    created_outings = db.query(Outing).filter(
+        Outing.creator_id == current_user.id, Outing.proposed_time > now, Outing.status != "cancelled"
+    ).all()
     accepted_outing_ids = [invite.outing_id for invite in db.query(OutingInvite).filter(
         OutingInvite.invitee_id == current_user.id, OutingInvite.status == "accepted"
     ).all()]
     accepted_outings = db.query(Outing).filter(
-        Outing.id.in_(accepted_outing_ids), Outing.proposed_time > now
+        Outing.id.in_(accepted_outing_ids), Outing.proposed_time > now, Outing.status != "cancelled"
     ).all() if accepted_outing_ids else []
 
     outings_by_id = {outing.id: outing for outing in created_outings}
@@ -324,3 +326,40 @@ def get_current_outings(current_user : User = Depends(get_current_user), db : Se
         ))
     result.sort(key=lambda o: o.proposed_time)
     return result
+
+@app.post("/outings/{outing_id}/leave", response_model=OutingInviteOut)
+def leave_outing(outing_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    invite = db.query(OutingInvite).filter(
+        OutingInvite.outing_id == outing_id, OutingInvite.invitee_id == current_user.id
+    ).first()
+    if not invite:
+        raise HTTPException(status_code=404, detail="you are not invited to this outing")
+    if invite.status != "accepted":
+        raise HTTPException(status_code=400, detail="you haven't accepted this outing")
+    invite.status = "left"
+    invite.responded_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(invite)
+    outing = db.query(Outing).filter(Outing.id == invite.outing_id).first()
+    return OutingInviteOut(
+        id=invite.id,
+        outing_id=invite.outing_id,
+        invitee_id=invite.invitee_id,
+        status=invite.status,
+        outing_title=outing.title,
+        outing_location=outing.location,
+        outing_time=outing.proposed_time,
+        responded_at=invite.responded_at,
+    )
+
+@app.post("/outings/{outing_id}/delete", response_model=OutingOut)
+def delete_outing(outing_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    outing = db.query(Outing).filter(Outing.id == outing_id).first()
+    if not outing:
+        raise HTTPException(status_code=404, detail="outing not found")
+    if outing.creator_id != current_user.id:
+        raise HTTPException(status_code=403, detail="only the creator can delete this outing")
+    outing.status = "cancelled"
+    db.commit()
+    db.refresh(outing)
+    return outing
