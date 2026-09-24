@@ -575,6 +575,15 @@ nav a[href="/signup"]:hover {
   margin: 0;
 }
 
+.match-card-plan-button {
+  margin-top: var(--space-2);
+  background: var(--plum);
+}
+
+.match-card-plan-button:hover {
+  background: var(--plum-hover);
+}
+
 @keyframes match-pulse {
   0%, 100% {
     box-shadow: 0 16px 40px rgba(140, 78, 125, 0.18);

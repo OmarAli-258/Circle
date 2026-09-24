@@ -20,6 +20,12 @@ function formatRange(startInput, endInput) {
   return `${formatDateTime(start)} – ${formatDateTime(end)}`
 }
 
+function toDatetimeLocalValue(dateInput) {
+  const date = new Date(dateInput)
+  const pad = (n) => String(n).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 function DashboardPage() {
   const navigate = useNavigate()
   useEffect(() => {
@@ -334,6 +340,11 @@ function DashboardPage() {
   } 
 
   const [proposedTime, setProposedTime] = useState("")
+  function handlePlanFromMatch(friend) {
+    setInvitedFriends([friend.id])
+    setProposedTime(toDatetimeLocalValue(friend.overlap_start))
+    document.getElementById("outing-title")?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
   const [outingLocation,setOutingLocation] = useState("")
   const [outingTitle, setOutingTitle] = useState("")
   const [outingMessage, setOutingMessage] = useState("")
@@ -457,6 +468,7 @@ function DashboardPage() {
                 </div>
                 <p className="match-card-title">You and {friend.display_name} are free</p>
                 <p className="match-card-time">{formatRange(friend.overlap_start, friend.overlap_end)}</p>
+                <button className="match-card-plan-button" onClick={() => handlePlanFromMatch(friend)}>Plan something</button>
               </div>
             ))}
           </div>
