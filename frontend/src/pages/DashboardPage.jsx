@@ -395,6 +395,7 @@ function DashboardPage() {
                   <div className="avatar avatar-plum match-avatar-right">{friend.email[0].toUpperCase()}</div>
                 </div>
                 <p className="match-card-title">You and {friend.email} are free</p>
+                <p className="match-card-time">{new Date(friend.overlap_start).toLocaleString()} – {new Date(friend.overlap_end).toLocaleString()}</p>
               </div>
             ))}
           </div>

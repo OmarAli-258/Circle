@@ -727,11 +727,21 @@ Frontend: a small `You're currently marked as free:` block appears right above t
 
 **Verified for real:** two pre-existing test windows showed up correctly on load; posted a brand-new window through the actual form and watched it appear in the reminder list instantly, no reload, alongside the two that were already there.
 
+### Phase D, part 3 — show the actual overlapping time on the match card
+
+Last of the three-part request: a match card just said "You and X are free" with no indication of *when* — the whole point of the feature is a specific overlapping window, and it was the one piece of information missing from its own result.
+
+`overlaps(start_a, start_b, end_a, end_b)` in `utils.py` already computes `max(start_a, start_b)`/`min(end_a, end_b)` internally to decide *whether* an overlap exists, but only ever returned a boolean — it throws away the exact window it just calculated. Rather than change that function's return shape (it's a small, already-tested pure function, used in exactly one place, so widening its contract felt like the wrong kind of change for what's needed here), `get_availability_matches` now redoes that same `max`/`min` once more, only for windows `overlaps()` already confirmed cross — same formula, kept in the one place that actually needs the values.
+
+New response shape: added `MatchOut` (id, email, created_at, plus `overlap_start`/`overlap_end`) replacing the old plain `UserOut` response for this one endpoint — `matched_overlaps` is now a dict keyed by friend id holding the overlap window, built alongside the existing matching loop instead of a bare id list. Frontend: one new line on the match card, reusing the `.match-card-time` CSS class that already existed (originally written for the landing page's static mock card) — `{new Date(overlap_start).toLocaleString()} – {new Date(overlap_end).toLocaleString()}`.
+
+**Verified for real, math checked by hand:** tester's window (19:00–21:00 UTC) against Emma's (20:00–22:00 UTC) should overlap exactly 20:00–21:00 UTC — the match card displayed "9:00 PM – 10:00 PM", which is exactly that window in this environment's local UTC+1, confirming the computed overlap and its timezone conversion are both correct, not just present.
+
 ---
 
-## RESUME HERE — Phase D part 2 (availability reminder) is done. Next: part 3 (show the specific overlapping time on a match card), the last of the three things the user asked for in one batch.
+## RESUME HERE — All three parts of the user's outings/availability/match visibility request are done. Next: tests/CI (item 7), then the README deferred-items note (item 8), then Day 2 is complete.
 
-**Status**: All five Phase C bug fixes are implemented, verified for real, and committed. Nothing half-finished. Day 2 remains: Phase D (outings view), tests/CI, README deferred-items note — see the numbered plan below (items 6–8), unchanged from when it was written.
+**Status**: Phase D is now fully done across all three parts (Current Outings section, availability reminder, match overlap time) — each built one at a time, shown to the user, and committed separately per their explicit request. Nothing half-finished.
 
 **Status**: All five Phase C bug fixes are implemented, verified for real, and committed. Nothing half-finished. Day 2 remains: Phase D (outings view), tests/CI, README deferred-items note — see the numbered plan below (items 6–8), unchanged from when it was written.
 

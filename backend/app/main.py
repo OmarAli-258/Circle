@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.models import User, FriendRequest, Availability, Outing, OutingInvite
-from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut, FriendRequestCreate, AvailabilityCreate, AvailabilityOut, OutingCreate, OutingOut,OutingInviteOut, CurrentOutingOut
+from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut, FriendRequestCreate, AvailabilityCreate, AvailabilityOut, OutingCreate, OutingOut,OutingInviteOut, CurrentOutingOut, MatchOut
 from app.security import hash_password, verify_password, create_access_token, get_current_user
 from app.utils import get_friend_ids, overlaps
 from sqlalchemy import text, and_, or_
@@ -155,20 +155,32 @@ def get_my_availability(current_user: User = Depends(get_current_user), db: Sess
         Availability.user_id == current_user.id, Availability.end_time > now
     ).order_by(Availability.start_time).all()
 
-@app.get("/availability/matches", response_model=list[UserOut])
+@app.get("/availability/matches", response_model=list[MatchOut])
 def get_availability_matches(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     friend_ids = get_friend_ids(current_user.id, db)
     now = datetime.now(timezone.utc)
     my_windows= db.query(Availability).filter(Availability.user_id == current_user.id, Availability.end_time > now).all()
     friend_windows= db.query(Availability).filter(Availability.user_id.in_(friend_ids), Availability.end_time > now).all()
-    matched_user_ids=[]
+    matched_overlaps = {}
     for my_window in my_windows:
         for friend_window in friend_windows:
             if overlaps(my_window.start_time,friend_window.start_time,my_window.end_time,friend_window.end_time):
-                if friend_window.user_id not in matched_user_ids:
-                    matched_user_ids.append(friend_window.user_id)
-    matches= db.query(User).filter(User.id.in_(matched_user_ids)).all()
-    return matches
+                if friend_window.user_id not in matched_overlaps:
+                    matched_overlaps[friend_window.user_id] = (
+                        max(my_window.start_time, friend_window.start_time),
+                        min(my_window.end_time, friend_window.end_time),
+                    )
+    result = []
+    for friend_id, (overlap_start, overlap_end) in matched_overlaps.items():
+        friend = db.query(User).filter(User.id == friend_id).first()
+        result.append(MatchOut(
+            id=friend.id,
+            email=friend.email,
+            created_at=friend.created_at,
+            overlap_start=overlap_start,
+            overlap_end=overlap_end,
+        ))
+    return result
 
 @app.post("/outings",response_model=OutingOut)
 def create_outings(outing_data : OutingCreate, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):

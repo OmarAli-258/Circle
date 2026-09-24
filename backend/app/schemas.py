@@ -68,3 +68,9 @@ class CurrentOutingOut(BaseModel):
     proposed_time : datetime
     creator_email : str
     accepted_invitee_emails : list[str]
+class MatchOut(BaseModel):
+    id : int
+    email : str
+    created_at : datetime
+    overlap_start : datetime
+    overlap_end : datetime
