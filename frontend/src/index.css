@@ -216,6 +216,10 @@ input:focus {
   outline-offset: 1px;
 }
 
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
 .dashboard-center input[type="text"],
 .dashboard-center input[type="email"],
 .dashboard-center input[type="password"],
