@@ -31,6 +31,30 @@
   --font-body: "Inter", system-ui, sans-serif;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cream: #201a14;
+    --cream-deep: #2a2119;
+    --surface: #2c231c;
+    --border: #4a3d30;
+    --text: #f2e6d6;
+    --text-muted: #b8a58c;
+
+    --coral: #f0925f;
+    --coral-hover: #f5a878;
+    --coral-bg: #3a2a20;
+    --coral-border: #6b4632;
+
+    --plum: #c186b3;
+    --plum-hover: #cd9bc1;
+    --plum-bg: #362530;
+    --plum-border: #5c3f54;
+
+    --danger: #e07272;
+    --success: #6fbd7a;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
