@@ -698,6 +698,13 @@ User liked the sidebar+main structure but wanted the whole thing (and the nav ba
 
 **Verified for real, not just assumed:** accepted a real pending request in the browser and watched it move into Friends with zero reload; sent a request to an existing friend (blocked as "you are already friends") and to someone with a request already pending in the other direction (blocked as "friend request already pending"); posted a `20:00–22:00` local availability window through the real form and confirmed via the network response it was stored as `19:00:00Z–21:00:00Z` (this environment's browser is UTC+1) — proving the conversion is real, not assumed; created a genuinely overlapping availability pair between two *already-expired* (year-2020) windows via the API directly and confirmed the match list correctly excluded it, while a real current overlap (with Emma) still correctly appeared.
 
+### Two small nav bugs the user found by just clicking around
+
+1. **Logged-out visit to `/dashboard` landed on the landing page, not the dashboard, after logging in.** `DashboardPage`'s own login check redirected to `/login` with no memory of where the user actually wanted to go, and `LoginPage` always navigated to `/` on success regardless — a real gap in Phase A's "login goes to `/`" change, which was only ever thought through for the landing page's *own* login link, not someone trying to reach `/dashboard` directly (bookmark, typed URL, old link). Fixed with the standard "remember where you were going" pattern: `DashboardPage` now redirects with `navigate("/login", { state: { from: "/dashboard" } })`, and `LoginPage` reads `useLocation().state?.from` and goes there on success, falling back to `/` exactly like before when there's no `from` (i.e. the normal landing-page login flow is untouched).
+2. **Clicking "Sign out" on the landing page bounced you to `/login` instead of just staying on the landing page.** `handleSignOut` already correctly did `setIsLoggedIn(false)` — enough on its own to flip the nav/hero back to Login/Sign up — but then called `navigate("/login")` right after anyway, yanking the user off the page that was already showing the right thing. Removed that line (and the now-unused `useNavigate` import).
+
+**Verified for real:** logged out, hit `/dashboard` directly, got bounced to `/login`, logged in, landed on `/dashboard` (not `/`); separately, on the landing page while logged in, clicked "Sign out" and confirmed it stayed on `/` with the nav/hero switching to Login/Sign up immediately, no navigation at all.
+
 ---
 
 ## RESUME HERE — Phase C is done and committed. Next: Phase D (Day 2).

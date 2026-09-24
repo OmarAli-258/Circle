@@ -1,17 +1,17 @@
 import {useState, useEffect, useRef} from "react"
 import {useNavigate, Link} from "react-router-dom"
 function DashboardPage() {
+  const navigate = useNavigate()
   useEffect(() => {
     async function checkLogin(){
       const token = localStorage.getItem("token")
       if (!token){
-        navigate("/login")
+        navigate("/login", { state: { from: "/dashboard" } })
       }
     }
     checkLogin()
   },[] )
   const [currentUser, setCurrentUser] = useState(null)
-  const navigate = useNavigate()
   function handleLogout(){
     localStorage.removeItem("token")
     navigate("/login")
