@@ -246,11 +246,13 @@ def accept_outing_invite(invite_id : int ,current_user : User = Depends(get_curr
         raise HTTPException(status_code=403, detail= "user is not invitee")
     if outinginvite.status != "pending":
         raise HTTPException(status_code=400, detail= "already responded to")
+    detail=db.query(Outing).filter(outinginvite.outing_id==Outing.id).first()
+    if detail.status == "cancelled":
+        raise HTTPException(status_code=400, detail="this outing was cancelled")
     outinginvite.status="accepted"
     outinginvite.responded_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(outinginvite)
-    detail=db.query(Outing).filter(outinginvite.outing_id==Outing.id).first()
     outinginviteout=OutingInviteOut(
         id = outinginvite.id,
         outing_id = outinginvite.outing_id,
@@ -272,11 +274,13 @@ def decline_outing_invite(invite_id : int ,current_user : User = Depends(get_cur
         raise HTTPException(status_code=403, detail= "user is not invitee")
     if outinginvite.status != "pending":
         raise HTTPException(status_code=400, detail= "already responded to")
+    detail=db.query(Outing).filter(outinginvite.outing_id==Outing.id).first()
+    if detail.status == "cancelled":
+        raise HTTPException(status_code=400, detail="this outing was cancelled")
     outinginvite.status="declined"
     outinginvite.responded_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(outinginvite)
-    detail=db.query(Outing).filter(outinginvite.outing_id==Outing.id).first()
     outinginviteout=OutingInviteOut(
         id = outinginvite.id,
         outing_id = outinginvite.outing_id,
@@ -307,7 +311,12 @@ def my_friend_requests(current_user : User = Depends(get_current_user), db : Ses
     return result
 @app.get("/outing_invites/pending", response_model=list[OutingInviteOut])
 def my_outing_invites(current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
-    outing_invites=db.query(OutingInvite).filter(current_user.id ==OutingInvite.invitee_id, OutingInvite.status=="pending").all()
+    cancelled_outing_ids = [o.id for o in db.query(Outing).filter(Outing.status == "cancelled").all()]
+    outing_invites=db.query(OutingInvite).filter(
+        current_user.id == OutingInvite.invitee_id,
+        OutingInvite.status == "pending",
+        OutingInvite.outing_id.notin_(cancelled_outing_ids),
+    ).all()
     result = []
     for invite in outing_invites:
         outing = db.query(Outing).filter(Outing.id == invite.outing_id).first()
