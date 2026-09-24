@@ -44,6 +44,31 @@ function DashboardPage() {
     navigate("/login")
   }
 
+  const [pendingAction, setPendingAction] = useState(null)
+  const [actionError, setActionError] = useState("")
+  async function runAction(key, url) {
+    setPendingAction(key)
+    setActionError("")
+    const token = localStorage.getItem("token")
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {"Authorization": `Bearer ${token}`}
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        setActionError(data.detail || "something went wrong, please try again")
+        return false
+      }
+      return true
+    } catch {
+      setActionError("network error, please try again")
+      return false
+    } finally {
+      setPendingAction(null)
+    }
+  }
+
   useEffect(() => {
     async function fetchUser() {
       const token = localStorage.getItem("token")
@@ -81,12 +106,8 @@ function DashboardPage() {
     displayFriends()
   }, [])
   async function handleRemoveFriend(friendId) {
-    const token = localStorage.getItem("token")
-    await fetch(`http://localhost:8000/friends/${friendId}/remove`, {
-      method : "POST",
-      headers : {"Authorization" : `Bearer ${token}`}
-    })
-    displayFriends()
+    const ok = await runAction(`remove-friend-${friendId}`, `http://localhost:8000/friends/${friendId}/remove`)
+    if (ok) displayFriends()
   }
   const [friendsList, setFriendsList] = useState([])
   async function displayFriendsList(){
@@ -107,21 +128,12 @@ function DashboardPage() {
     displayFriendsList()
   },[])
   async function handleAccept(id){
-    const token = localStorage.getItem("token")
-    const response = await fetch(`http://localhost:8000/friend_requests/${id}/accept`, {
-      method : "POST",
-      headers: {"Authorization" : `Bearer ${token}` }
-    })
-    displayFriendsList()
-    displayFriends()
+    const ok = await runAction(`accept-request-${id}`, `http://localhost:8000/friend_requests/${id}/accept`)
+    if (ok) { displayFriendsList(); displayFriends() }
   }
   async function handleDecline(id){
-    const token = localStorage.getItem("token")
-    const response = await fetch(`http://localhost:8000/friend_requests/${id}/decline`, {
-      method : "POST",
-      headers: {"Authorization" : `Bearer ${token}`}
-    })
-    displayFriendsList()
+    const ok = await runAction(`decline-request-${id}`, `http://localhost:8000/friend_requests/${id}/decline`)
+    if (ok) displayFriendsList()
   }
   const [requestEmail, setRequestEmail] = useState("")
   const [message ,setMessage] = useState("")
@@ -175,13 +187,8 @@ function DashboardPage() {
     displayMyAvailability()
   }, [])
   async function handleDeleteAvailability(availabilityId) {
-    const token = localStorage.getItem("token")
-    if (!token) return
-    await fetch(`http://localhost:8000/availability/${availabilityId}/delete`, {
-      method: "POST",
-      headers: {"Authorization": `Bearer ${token}`}
-    })
-    displayMyAvailability()
+    const ok = await runAction(`delete-availability-${availabilityId}`, `http://localhost:8000/availability/${availabilityId}/delete`)
+    if (ok) displayMyAvailability()
   }
   async function handlePostAvailabilty(e){
     e.preventDefault()
@@ -304,40 +311,23 @@ function DashboardPage() {
   }, [])
 
   async function handleLeaveOuting(outingId) {
-    const token = localStorage.getItem("token")
-    await fetch(`http://localhost:8000/outings/${outingId}/leave`, {
-      method : "POST",
-      headers : {"Authorization" : `Bearer ${token}`}
-    })
-    displayCurrentOutings()
+    const ok = await runAction(`leave-outing-${outingId}`, `http://localhost:8000/outings/${outingId}/leave`)
+    if (ok) displayCurrentOutings()
   }
 
   async function handleDeleteOuting(outingId) {
-    const token = localStorage.getItem("token")
-    await fetch(`http://localhost:8000/outings/${outingId}/delete`, {
-      method : "POST",
-      headers : {"Authorization" : `Bearer ${token}`}
-    })
-    displayCurrentOutings()
+    const ok = await runAction(`delete-outing-${outingId}`, `http://localhost:8000/outings/${outingId}/delete`)
+    if (ok) displayCurrentOutings()
   }
 
   async function handleAcceptOuting(id) {
-    const token = localStorage.getItem("token")
-    const response = await fetch(`http://localhost:8000/outing_invites/${id}/accept`,{
-      method : "POST",
-      headers : {"Authorization" : `Bearer ${token}`}
-    })
-    displayOutingInvites()
-    displayCurrentOutings()
+    const ok = await runAction(`accept-outing-${id}`, `http://localhost:8000/outing_invites/${id}/accept`)
+    if (ok) { displayOutingInvites(); displayCurrentOutings() }
   }
 
   async function handleDeclineOuting(id) {
-    const token = localStorage.getItem("token")
-    const response = await fetch(`http://localhost:8000/outing_invites/${id}/decline`,{
-      method : "POST",
-      headers : {"Authorization" : `Bearer ${token}`} 
-    })
-    displayOutingInvites()
+    const ok = await runAction(`decline-outing-${id}`, `http://localhost:8000/outing_invites/${id}/decline`)
+    if (ok) displayOutingInvites()
   }
 
   const [invitedFriends, setInvitedFriends ] = useState([])
@@ -409,6 +399,7 @@ function DashboardPage() {
           <button className="btn-secondary" onClick = {() => handleLogout()}>Logout</button>
         </div>
       </div>
+      {actionError && <p className="form-message">{actionError}</p>}
 
       <div className="dashboard-layout">
         <div className="dashboard-section dashboard-sidebar">
@@ -418,7 +409,7 @@ function DashboardPage() {
             {friends.map(friend => (
               <p className="list-row" key ={friend.id}>
                 <span title={friend.display_name}>{friend.display_name}</span>
-                <button className="btn-secondary" onClick={() => handleRemoveFriend(friend.id)}>Remove</button>
+                <button className="btn-secondary" disabled={pendingAction === `remove-friend-${friend.id}`} onClick={() => handleRemoveFriend(friend.id)}>Remove</button>
               </p>
             ))}
           </div>
@@ -429,8 +420,8 @@ function DashboardPage() {
             {friendsList.map(friend_request => ( <p className="list-row" key = {friend_request.id}>
               <span title={friend_request.requester_display_name}>{friend_request.requester_display_name}</span>
               <span className="row-actions">
-                <button onClick={() => handleAccept(friend_request.id)}>Accept</button>
-                <button className="btn-secondary" onClick={() => handleDecline(friend_request.id)}>Decline</button>
+                <button disabled={pendingAction === `accept-request-${friend_request.id}`} onClick={() => handleAccept(friend_request.id)}>Accept</button>
+                <button className="btn-secondary" disabled={pendingAction === `decline-request-${friend_request.id}`} onClick={() => handleDecline(friend_request.id)}>Decline</button>
               </span>
             </p>
           ))}
@@ -457,7 +448,7 @@ function DashboardPage() {
                   <p className="list-row" key={window.id}>
                     <span>{formatRange(window.start_time, window.end_time)}</span>
                     <span className="row-actions">
-                      <button className="btn-secondary" onClick={() => handleDeleteAvailability(window.id)}>Remove</button>
+                      <button className="btn-secondary" disabled={pendingAction === `delete-availability-${window.id}`} onClick={() => handleDeleteAvailability(window.id)}>Remove</button>
                     </span>
                   </p>
                 ))}
@@ -496,8 +487,8 @@ function DashboardPage() {
             <p className="list-row" key={invite.id}>
               <span>{invite.outing_title}, {invite.outing_location}, {invite.outing_time}</span>
               <span className="row-actions">
-                <button onClick={() => handleAcceptOuting(invite.id)}>Accept</button>
-                <button className="btn-secondary" onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
+                <button disabled={pendingAction === `accept-outing-${invite.id}`} onClick={() => handleAcceptOuting(invite.id)}>Accept</button>
+                <button className="btn-secondary" disabled={pendingAction === `decline-outing-${invite.id}`} onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
               </span>
             </p>
           ))}
@@ -520,9 +511,9 @@ function DashboardPage() {
               </span>
               <span className="row-actions">
                 {outing.creator_email === currentUser?.email ? (
-                  <button className="btn-secondary" onClick={() => handleDeleteOuting(outing.id)}>Delete</button>
+                  <button className="btn-secondary" disabled={pendingAction === `delete-outing-${outing.id}`} onClick={() => handleDeleteOuting(outing.id)}>Delete</button>
                 ) : (
-                  <button className="btn-secondary" onClick={() => handleLeaveOuting(outing.id)}>Leave</button>
+                  <button className="btn-secondary" disabled={pendingAction === `leave-outing-${outing.id}`} onClick={() => handleLeaveOuting(outing.id)}>Leave</button>
                 )}
               </span>
             </div>
