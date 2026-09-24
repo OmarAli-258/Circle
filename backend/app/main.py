@@ -136,6 +136,30 @@ def list_friends(current_user : User = Depends(get_current_user),db : Session = 
     friends=db.query(User).filter(User.id.in_(friend_ids)).all()
     return friends
 
+@app.post("/friends/{friend_id}/remove", response_model=FriendRequestOut)
+def remove_friend(friend_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    friend_request = db.query(FriendRequest).filter(
+        or_(
+            and_(FriendRequest.requester_id == current_user.id, FriendRequest.recipient_id == friend_id),
+            and_(FriendRequest.requester_id == friend_id, FriendRequest.recipient_id == current_user.id),
+        ),
+        FriendRequest.status == "accepted",
+    ).first()
+    if not friend_request:
+        raise HTTPException(status_code=404, detail="not currently friends with this user")
+    friend_request.status = "removed"
+    db.commit()
+    db.refresh(friend_request)
+    requester = db.query(User).filter(User.id == friend_request.requester_id).first()
+    return FriendRequestOut(
+        id=friend_request.id,
+        requester_id=friend_request.requester_id,
+        requester_email=requester.email,
+        recipient_id=friend_request.recipient_id,
+        status=friend_request.status,
+        created_at=friend_request.created_at,
+    )
+
 @app.post("/availability", response_model=AvailabilityOut)
 def create_availability(availability_data: AvailabilityCreate, current_user: User = Depends(get_current_user),
                         db: Session = Depends(get_db)):

@@ -763,7 +763,26 @@ Every date/time shown anywhere (Availability reminder, Match overlap, Current Ou
 
 ---
 
-## RESUME HERE — Relative date formatting is done. Next: the always-visible friend-remove button — same one-at-a-time rhythm, last item in this round before returning to Day 2's tests/CI + README.
+### Remove-friend capability — an always-visible button, not hover-reveal
+
+Last item of this round. Recommended against the user's original hover-to-reveal idea before building it: this app gets checked at mobile widths throughout the project, and hover doesn't exist on a touchscreen — a hover-only button would be genuinely unreachable on a phone. Built as a small, always-visible "Remove" button next to each friend instead, matching the same visible-button pattern Friend Requests and Outing Invites already use.
+
+New endpoint, `POST /friends/{friend_id}/remove`: finds the `accepted` `FriendRequest` row between the two users (checking both directions, same `or_`/`and_` pattern the duplicate-request check already uses) and flips it to a new status, `removed` — a plain string value, no schema change, same "never delete the row, just change its status" pattern every other friend/outing action already follows. Because `removed` isn't `pending` or `accepted`, the existing duplicate-request guard doesn't block a future re-request between the same two people — removing someone and later re-adding them just works.
+
+Real CSS bug hit while wiring the button in: the base `.list-row` class sets `flex-wrap: wrap`, which the Friends row (now with two children — email and the new button) inherited, pushing the button onto its own line below the email instead of staying beside it. Fixed with an explicit `flex-wrap: nowrap` on the sidebar's row rule, letting the email's existing `min-width: 0` + ellipsis truncation do its job instead of the row wrapping.
+
+**Verified for real, both sides plus the "can I still make friends again" check:** removed a friend from `phaseb_tester`'s side and confirmed it disappeared from *both* accounts' friend lists (and from the Create Outing invite checklist, which shares the same `friends` data — no extra work needed there); confirmed sending a fresh friend request to that same removed person afterward succeeded normally instead of being incorrectly blocked as a duplicate.
+
+---
+
+### Two small polish fixes found by real clicking-around
+
+1. **Logout/Remove/Decline/Leave buttons' hover barely looked like anything.** They all use `.btn-secondary`, whose hover only shifted background from transparent to `--cream-deep` (`#fff6ed`) — a near-invisible change against the page's own cream background, unlike the landing page's "Sign out" button which visibly darkens from `--coral` to `--coral-hover`. Changed `.btn-secondary:hover` to use `--border` (`#f0dcc0`, a properly warm tan) for the background plus `--text` for the text color — confirmed via `getComputedStyle` before and after, not just eyeballed, that this is now a real, clearly perceptible change everywhere that class is used.
+2. **Hovering a truncated friend/request email showed nothing.** The sidebar intentionally truncates long emails with an ellipsis (from yesterday's overflow fix), but there was no way to see the full value without guessing. Added a native `title` attribute to both truncated spans (Friends and Friend Requests) — the browser's own built-in tooltip now shows the full email on hover, no custom tooltip component needed.
+
+---
+
+## RESUME HERE — All of this round (outing leave/delete, relative dates, friend-remove, the two polish fixes) is done and about to be committed together. Next: back to Day 2's original remaining items — tests/CI, then the README deferred-items note.
 
 **Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:
 

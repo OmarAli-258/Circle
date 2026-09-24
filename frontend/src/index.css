@@ -71,17 +71,13 @@ body {
 }
 
 .dashboard-sidebar .list-row {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dashboard-sidebar-section--divider .list-row {
   display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
 }
 
-.dashboard-sidebar-section--divider .list-row > span:first-child {
+.dashboard-sidebar .list-row > span:first-child {
   flex: 1 1 auto;
   min-width: 0;
   white-space: nowrap;
@@ -89,7 +85,8 @@ body {
   text-overflow: ellipsis;
 }
 
-.dashboard-sidebar-section--divider .list-row .row-actions {
+.dashboard-sidebar .list-row .row-actions,
+.dashboard-sidebar .list-row > button {
   flex-shrink: 0;
 }
 
@@ -308,7 +305,8 @@ button:disabled {
 }
 
 .btn-secondary:hover {
-  background: var(--cream-deep);
+  background: var(--border);
+  color: var(--text);
 }
 
 .auth-page {

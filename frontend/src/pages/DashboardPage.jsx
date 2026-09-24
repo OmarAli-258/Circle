@@ -73,6 +73,14 @@ function DashboardPage() {
   useEffect(() => {
     displayFriends()
   }, [])
+  async function handleRemoveFriend(friendId) {
+    const token = localStorage.getItem("token")
+    await fetch(`http://localhost:8000/friends/${friendId}/remove`, {
+      method : "POST",
+      headers : {"Authorization" : `Bearer ${token}`}
+    })
+    displayFriends()
+  }
   const [friendsList, setFriendsList] = useState([])
   async function displayFriendsList(){
     const token= localStorage.getItem("token")
@@ -373,14 +381,19 @@ function DashboardPage() {
           <div className="dashboard-sidebar-section">
             <h3>Friends</h3>
             {friends.length === 0 && <p className="empty-state">No friends yet — send a request below to get started.</p>}
-            {friends.map(friend => <p className="list-row" key ={friend.id}> {friend.email} </p>)}
+            {friends.map(friend => (
+              <p className="list-row" key ={friend.id}>
+                <span title={friend.email}>{friend.email}</span>
+                <button className="btn-secondary" onClick={() => handleRemoveFriend(friend.id)}>Remove</button>
+              </p>
+            ))}
           </div>
 
           {friendsList.length > 0 && (
           <div className="dashboard-sidebar-section dashboard-sidebar-section--divider">
             <h3>Friend Requests</h3>
             {friendsList.map(friend_request => ( <p className="list-row" key = {friend_request.id}>
-              <span>{friend_request.requester_email}</span>
+              <span title={friend_request.requester_email}>{friend_request.requester_email}</span>
               <span className="row-actions">
                 <button onClick={() => handleAccept(friend_request.id)}>Accept</button>
                 <button className="btn-secondary" onClick={() => handleDecline(friend_request.id)}>Decline</button>
