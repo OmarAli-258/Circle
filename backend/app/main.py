@@ -148,6 +148,13 @@ def create_availability(availability_data: AvailabilityCreate, current_user: Use
     db.refresh(new_availability)
     return new_availability
 
+@app.get("/availability/mine", response_model=list[AvailabilityOut])
+def get_my_availability(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    now = datetime.now(timezone.utc)
+    return db.query(Availability).filter(
+        Availability.user_id == current_user.id, Availability.end_time > now
+    ).order_by(Availability.start_time).all()
+
 @app.get("/availability/matches", response_model=list[UserOut])
 def get_availability_matches(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     friend_ids = get_friend_ids(current_user.id, db)

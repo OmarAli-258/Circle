@@ -717,9 +717,21 @@ Frontend: `displayCurrentOutings` (same fetch-and-set pattern as everything else
 
 **Verified for real, both directions:** created a real outing from `phaseb_tester` inviting `phaseb_friend` — confirmed it appeared immediately on the creator's side showing "with just you so far" (nobody had accepted yet); accepted it as `phaseb_friend` and confirmed *both* accounts now show it with `phaseb_friend@example.com` listed as confirmed; separately created a deliberately backdated (year-2020) outing and confirmed it correctly never appears in Current Outings at all.
 
+### Phase D, part 2 — a reminder of your own posted availability
+
+There was no way to see what you'd already told the app — post "free 6-8pm" and it just vanished into the backend with no confirmation anywhere. Per the user's own framing, this didn't need a whole new section, just a small reminder tucked into the existing Availability card.
+
+New backend endpoint, `GET /availability/mine` — the current user's own upcoming availability windows (same `end_time > now` expiry filter as everywhere else that deals with time, ordered soonest-first). No new schema needed, since `AvailabilityOut` already covers exactly this shape.
+
+Frontend: a small `You're currently marked as free:` block appears right above the Availability form, listing every window with a human-readable date range (`toLocaleString()`, not raw ISO text), only when at least one exists. Refetches on mount and immediately after a successful post, same pattern as everything else today.
+
+**Verified for real:** two pre-existing test windows showed up correctly on load; posted a brand-new window through the actual form and watched it appear in the reminder list instantly, no reload, alongside the two that were already there.
+
 ---
 
-## RESUME HERE — Phase D part 1 (Current Outings) is done. Next: part 2 (availability reminder), then part 3 (match time details), one at a time per the user's explicit request.
+## RESUME HERE — Phase D part 2 (availability reminder) is done. Next: part 3 (show the specific overlapping time on a match card), the last of the three things the user asked for in one batch.
+
+**Status**: All five Phase C bug fixes are implemented, verified for real, and committed. Nothing half-finished. Day 2 remains: Phase D (outings view), tests/CI, README deferred-items note — see the numbered plan below (items 6–8), unchanged from when it was written.
 
 **Status**: All five Phase C bug fixes are implemented, verified for real, and committed. Nothing half-finished. Day 2 remains: Phase D (outings view), tests/CI, README deferred-items note — see the numbered plan below (items 6–8), unchanged from when it was written.
 

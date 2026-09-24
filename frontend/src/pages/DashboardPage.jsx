@@ -121,6 +121,24 @@ function DashboardPage() {
   const [availabilityMessage, setAvailabilityMessage] = useState("")
   const [availabilityMessageIsError, setAvailabilityMessageIsError] = useState(false)
   const [postingAvailability, setPostingAvailability] = useState(false)
+  const [myAvailability, setMyAvailability] = useState([])
+  async function displayMyAvailability() {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    const response = await fetch(`http://localhost:8000/availability/mine`, {
+      headers : {"Authorization" : `Bearer ${token}`}
+    })
+    if (!response.ok) {
+      localStorage.removeItem("token")
+      navigate("/login")
+      return
+    }
+    const data = await response.json()
+    setMyAvailability(data)
+  }
+  useEffect(() => {
+    displayMyAvailability()
+  }, [])
   async function handlePostAvailabilty(e){
     e.preventDefault()
     setPostingAvailability(true)
@@ -140,6 +158,7 @@ function DashboardPage() {
       setAvailabilityMessage("Availability Set")
       setAvailabilityMessageIsError(false)
       displayMatched()
+      displayMyAvailability()
     } else {
       setAvailabilityMessage(data.detail)
       setAvailabilityMessageIsError(true)
@@ -346,6 +365,16 @@ function DashboardPage() {
           </div>
           <div className="dashboard-section">
             <h3>Availability</h3>
+            {myAvailability.length > 0 && (
+              <div className="availability-reminder">
+                <p className="empty-state">You're currently marked as free:</p>
+                {myAvailability.map(window => (
+                  <p className="list-row" key={window.id}>
+                    {new Date(window.start_time).toLocaleString()} – {new Date(window.end_time).toLocaleString()}
+                  </p>
+                ))}
+              </div>
+            )}
             <form onSubmit={handlePostAvailabilty}>
               <label htmlFor="availability-start">Available from</label>
               <input id="availability-start" type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} />

@@ -227,6 +227,10 @@ button:disabled {
   font-style: italic;
 }
 
+.availability-reminder {
+  margin-bottom: var(--space-2);
+}
+
 .dashboard-section--plum button:not(.btn-secondary) {
   background: var(--plum);
 }
