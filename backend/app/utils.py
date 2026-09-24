@@ -3,8 +3,10 @@ from datetime import timedelta
 from app.models import FriendRequest
 
 
-def overlaps(start_a, start_b, end_a, end_b):
+def overlaps(start_a, start_b, end_a, end_b, now=None):
     overlap_start=max(start_a,start_b)
+    if now is not None:
+        overlap_start=max(overlap_start,now)
     overlap_end=min(end_a,end_b)
     overlap=(overlap_end-overlap_start)
     return overlap>= timedelta(minutes=30)

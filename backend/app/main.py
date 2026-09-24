@@ -196,10 +196,10 @@ def get_availability_matches(current_user: User = Depends(get_current_user), db:
     matched_overlaps = {}
     for my_window in my_windows:
         for friend_window in friend_windows:
-            if overlaps(my_window.start_time,friend_window.start_time,my_window.end_time,friend_window.end_time):
+            if overlaps(my_window.start_time,friend_window.start_time,my_window.end_time,friend_window.end_time,now=now):
                 if friend_window.user_id not in matched_overlaps:
                     matched_overlaps[friend_window.user_id] = (
-                        max(my_window.start_time, friend_window.start_time),
+                        max(my_window.start_time, friend_window.start_time, now),
                         min(my_window.end_time, friend_window.end_time),
                     )
     result = []
