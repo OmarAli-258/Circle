@@ -174,6 +174,15 @@ function DashboardPage() {
   useEffect(() => {
     displayMyAvailability()
   }, [])
+  async function handleDeleteAvailability(availabilityId) {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    await fetch(`http://localhost:8000/availability/${availabilityId}/delete`, {
+      method: "POST",
+      headers: {"Authorization": `Bearer ${token}`}
+    })
+    displayMyAvailability()
+  }
   async function handlePostAvailabilty(e){
     e.preventDefault()
     if (!availabilityStart || !availabilityEnd) {
@@ -446,7 +455,10 @@ function DashboardPage() {
                 <p className="empty-state">You're currently marked as free:</p>
                 {myAvailability.map(window => (
                   <p className="list-row" key={window.id}>
-                    {formatRange(window.start_time, window.end_time)}
+                    <span>{formatRange(window.start_time, window.end_time)}</span>
+                    <span className="row-actions">
+                      <button className="btn-secondary" onClick={() => handleDeleteAvailability(window.id)}>Remove</button>
+                    </span>
                   </p>
                 ))}
               </div>
