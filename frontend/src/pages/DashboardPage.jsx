@@ -169,6 +169,11 @@ function DashboardPage() {
   }, [])
   async function handlePostAvailabilty(e){
     e.preventDefault()
+    if (!availabilityStart || !availabilityEnd) {
+      setAvailabilityMessage("Please fill in both start and end times")
+      setAvailabilityMessageIsError(true)
+      return
+    }
     setPostingAvailability(true)
     const token = localStorage.getItem("token")
     const response = await fetch(`http://localhost:8000/availability`, {
@@ -336,6 +341,11 @@ function DashboardPage() {
   const [creatingOuting, setCreatingOuting] = useState(false)
   async function handleCreateOuting(e) {
     e.preventDefault()
+    if (!proposedTime) {
+      setOutingMessage("Please choose a time")
+      setOutingMessageIsError(true)
+      return
+    }
     setCreatingOuting(true)
     const token = localStorage.getItem("token")
     const response = await fetch(`http://localhost:8000/outings`, {
@@ -428,9 +438,9 @@ function DashboardPage() {
             )}
             <form onSubmit={handlePostAvailabilty}>
               <label htmlFor="availability-start">Available from</label>
-              <input id="availability-start" type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} />
+              <input id="availability-start" type="datetime-local" value={availabilityStart} onChange={(e) => setAvailabilityStart(e.target.value)} required />
               <label htmlFor="availability-end">Available until</label>
-              <input id="availability-end" type="datetime-local" value={availabilityEnd} onChange={(e) => setAvailabilityEnd(e.target.value)} />
+              <input id="availability-end" type="datetime-local" value={availabilityEnd} onChange={(e) => setAvailabilityEnd(e.target.value)} required />
               <button type="submit" disabled={postingAvailability}>{postingAvailability ? "Posting..." : "Post"}</button>
             </form>
             {availabilityMessage && <p className={availabilityMessageIsError ? "form-message" : "form-message form-message--success"}>{availabilityMessage}</p>}
@@ -497,7 +507,7 @@ function DashboardPage() {
               <label htmlFor="outing-title">Title</label>
               <input id="outing-title" type="text" value={outingTitle} onChange={(e) => setOutingTitle(e.target.value)} />
               <label htmlFor="outing-time">When</label>
-              <input id="outing-time" type="datetime-local" value={proposedTime} onChange={(e) => setProposedTime(e.target.value)} />
+              <input id="outing-time" type="datetime-local" value={proposedTime} onChange={(e) => setProposedTime(e.target.value)} required />
               <label htmlFor="outing-location">Location</label>
               <input id="outing-location" type="text" value={outingLocation} onChange={(e) => setOutingLocation(e.target.value)} />
               <div className="invite-friends-grid">

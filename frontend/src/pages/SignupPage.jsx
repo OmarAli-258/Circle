@@ -1,6 +1,13 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 
+function formatErrorDetail(detail) {
+  if (Array.isArray(detail)) {
+    return detail.map(e => e.msg).join(" ")
+  }
+  return detail
+}
+
 function SignupPage() {
   const [email, setEmail] = useState("")
   const [username, setUsername] = useState("")
@@ -22,7 +29,7 @@ function SignupPage() {
       setMessage(`Account created for ${data.email}`)
       setMessageIsError(false)
     } else {
-      setMessage(data.detail)
+      setMessage(formatErrorDetail(data.detail))
       setMessageIsError(true)
     }
     setIsSubmitting(false)
@@ -34,11 +41,11 @@ function SignupPage() {
         <h2>Circle</h2>
         <form onSubmit={handleSubmit}>
           <label htmlFor="signup-email">Email</label>
-          <input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          <input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
           <label htmlFor="signup-username">Username</label>
-          <input id="signup-username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
+          <input id="signup-username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required />
           <label htmlFor="signup-password">Password</label>
-          <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+          <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required />
           <button type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing up..." : "Sign up"}</button>
         </form>
         {message && <p className={messageIsError ? "form-message" : "form-message form-message--success"}>{message}</p>}
