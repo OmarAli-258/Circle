@@ -806,6 +806,16 @@ One deliberate exception, called out so it isn't mistaken for an oversight: the 
 
 ## RESUME HERE — Username field is fully implemented and verified, not yet committed (user is away from their laptop and asked me to wait for them before committing). Next, once committed: back to Day 2's original remaining items — tests/CI, then the README deferred-items note.
 
+### Post-launch: demo data cleanup + a real truncation bug the new usernames exposed
+
+Username field committed (`4fcde0d`). Immediately after, asked to clean up the dev database: 31 old test/throwaway accounts deleted (with their dependent `FriendRequest`/`Availability`/`Outing`/`OutingInvite` rows cleaned up first, in dependency order, to avoid a foreign-key violation), down to 4 kept accounts renamed to clean demo identities (`alex`, `jordan`, `sam`, `taylor`) plus one new account (`priya`) added specifically to demonstrate the pending-Friend-Request state, since none of the 4 originally kept had one left. Also renamed the one surviving real outing from "Username Test Outing" to "Coffee with Taylor" and deleted two empty test-only outings — same reasoning: leftover test-y titles would have undercut the point of cleaning up "for demonstration." This was pure database data, not code — nothing to commit for it, it's just live in the dev Postgres now.
+
+That cleanup immediately surfaced a real bug: a short username like `priya` in the Friend Requests row was rendering as `p...` — almost completely truncated, unlike a long email which at least showed several real characters before its ellipsis kicked in. Root cause: the Accept/Decline buttons at their normal size (`8px 16px` padding, 14px font) ate most of the 260px sidebar's width, leaving the name almost nothing to truncate *from*. Fixed on both sides at once, per the user's explicit ask to make it "universal, not just one spot": added `.dashboard-sidebar button { padding: 5px 10px; font-size: 13px; }`, shrinking Remove/Accept/Decline consistently everywhere in the sidebar (not just Friend Requests), and widened the sidebar itself 260px→300px. Grew the *whole* layout (nav to 1160px, dashboard content to match) rather than stealing the extra 40px from the center column, so the wider sidebar doesn't protrude past the nav or throw off the width the two already shared — confirmed via `getBoundingClientRect()` that nav and the dashboard content are still exactly the same width and left-aligned after the change.
+
+**Verified for real:** `priya`'s row now shows the full name comfortably next to full-size-looking-but-actually-smaller Accept/Decline buttons; measured nav and dashboard content both at exactly 1160px wide with matching left offsets at 1300px viewport; checked 375px mobile — still stacks cleanly with plenty of room.
+
+---
+
 **Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:
 
 **Keep — concrete day-by-day plan (2 days, ~3hrs/day, ~6hrs total):**

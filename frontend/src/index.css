@@ -45,14 +45,14 @@ body {
 }
 
 .page-container {
-  max-width: 1160px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: var(--space-3) var(--space-2) var(--space-4);
 }
 
 .dashboard-layout {
   display: grid;
-  grid-template-columns: 260px minmax(0, 844px);
+  grid-template-columns: 300px minmax(0, 844px);
   gap: var(--space-2);
   align-items: start;
   width: fit-content;
@@ -88,6 +88,11 @@ body {
 .dashboard-sidebar .list-row .row-actions,
 .dashboard-sidebar .list-row > button {
   flex-shrink: 0;
+}
+
+.dashboard-sidebar button {
+  padding: 5px 10px;
+  font-size: 13px;
 }
 
 .dashboard-center {
@@ -351,7 +356,7 @@ nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1120px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 16px 24px;
   background: var(--surface);
