@@ -500,12 +500,14 @@ function DashboardPage() {
               <input id="outing-time" type="datetime-local" value={proposedTime} onChange={(e) => setProposedTime(e.target.value)} />
               <label htmlFor="outing-location">Location</label>
               <input id="outing-location" type="text" value={outingLocation} onChange={(e) => setOutingLocation(e.target.value)} />
-              {friends.map(friend => (
-                <label key={friend.id}>
-                  <input type="checkbox" checked={invitedFriends.includes(friend.id)} onChange={() => toggleInvitedFriends(friend.id)} />
-                  {friend.display_name}
-                </label>
-              ))}
+              <div className="invite-friends-grid">
+                {friends.map(friend => (
+                  <label key={friend.id}>
+                    <input type="checkbox" checked={invitedFriends.includes(friend.id)} onChange={() => toggleInvitedFriends(friend.id)} />
+                    {friend.display_name}
+                  </label>
+                ))}
+              </div>
               <button type="submit" disabled={creatingOuting}>{creatingOuting ? "Creating..." : "Create Outing"}</button>
             </form>
             {outingMessage && <p className={outingMessageIsError ? "form-message" : "form-message form-message--success"}>{outingMessage}</p>}

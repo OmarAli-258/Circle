@@ -814,6 +814,14 @@ That cleanup immediately surfaced a real bug: a short username like `priya` in t
 
 **Verified for real:** `priya`'s row now shows the full name comfortably next to full-size-looking-but-actually-smaller Accept/Decline buttons; measured nav and dashboard content both at exactly 1160px wide with matching left offsets at 1300px viewport; checked 375px mobile — still stacks cleanly with plenty of room.
 
+### Create Outing's invite list — a scalability problem the demo data was too small to show
+
+User spotted this from a screenshot with only 3 friends, but correctly reasoned ahead to the real problem: the invite checklist was a single vertical column, which would get awkwardly tall with a real friend list while all the width next to it went unused.
+
+Wrapped the checkboxes in `.invite-friends-grid`: `display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));`. Deliberately chose `auto-fill`/`minmax` over a hardcoded fixed column count (the user's own suggestion, "3 for example") — auto-fill asks "how many 160px-or-wider columns actually fit this box," so it naturally shows ~3-4 columns at this layout's width, collapses to a single column on mobile with no separate breakpoint needed, and won't need revisiting if the box's width changes later for some other reason. One CSS gotcha: the form is a flex column with `align-items: flex-start`, which shrink-wraps children to their content size rather than stretching them — the grid needed an explicit `width: 100%` or auto-fill would've had no real width to divide into columns and just collapsed to its minimum.
+
+**Verified for real, not just at the 3-friend scale where the bug wouldn't show:** temporarily created 7 additional friend accounts (11 total) and measured the actual rendered grid via `getBoundingClientRect()` — confirmed 3 columns × 4 rows, not one 11-item column. Cleaned the temporary accounts back out afterward to keep the demo data tidy; in the process of batch-accepting their requests, `priya`'s request to `alex` got accidentally swept up and accepted along with them — caught this and reverted her `FriendRequest` row back to `pending`, since demonstrating that UI state was the entire reason she was added in the first place.
+
 ---
 
 **Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:

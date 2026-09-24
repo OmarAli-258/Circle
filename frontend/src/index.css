@@ -214,6 +214,18 @@ button:disabled {
   align-items: flex-start;
 }
 
+.invite-friends-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-bottom: var(--space-1);
+}
+
+.invite-friends-grid label {
+  margin-bottom: 0;
+}
+
 .dashboard-section--plum {
   background: var(--plum-bg);
   border-color: var(--plum-border);
