@@ -49,6 +49,31 @@ function LandingPage() {
                     </div>
                 </div>
             </section>
+            <section className="how-it-works">
+                <h2>How it works</h2>
+                <div className="how-it-works-steps">
+                    <div className="how-it-works-step">
+                        <div className="step-number">1</div>
+                        <h3>Add your friends</h3>
+                        <p>Send a friend request by email. Once they accept, you're connected — no group chats to manage.</p>
+                    </div>
+                    <div className="how-it-works-step">
+                        <div className="step-number">2</div>
+                        <h3>Share when you're free</h3>
+                        <p>Post a quick time window whenever your plans open up. Nobody sees it — yet.</p>
+                    </div>
+                    <div className="how-it-works-step">
+                        <div className="step-number">3</div>
+                        <h3>Get matched automatically</h3>
+                        <p>The moment your free time overlaps with a friend's, you both find out at the same time.</p>
+                    </div>
+                    <div className="how-it-works-step">
+                        <div className="step-number">4</div>
+                        <h3>Plan the outing</h3>
+                        <p>Turn a match into a real invite, and see who's actually confirmed before you show up.</p>
+                    </div>
+                </div>
+            </section>
         </div>
     )
 }

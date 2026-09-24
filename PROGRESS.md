@@ -782,7 +782,15 @@ Real CSS bug hit while wiring the button in: the base `.list-row` class sets `fl
 
 ---
 
-## RESUME HERE — All of this round (outing leave/delete, relative dates, friend-remove, the two polish fixes) is done and about to be committed together. Next: back to Day 2's original remaining items — tests/CI, then the README deferred-items note.
+### Phase G — "How it works," now mine to build
+
+Given the time left, the user handed over what was originally their own task (writing the landing page's "how it works" section) instead of doing it themselves. Built a 4-step section right below the hero: Add your friends → Share when you're free → Get matched automatically → Plan the outing — each with a numbered circle badge (alternating `--coral`/`--plum`, matching the match-card avatar colors already used elsewhere) and a short two-line description, matching the site's existing Poppins/Inter + cream/coral/plum system rather than introducing anything new. Grid of 4 across on desktop, stacks to one column under 800px.
+
+**Verified for real:** confirmed all four steps render with correct content and alternating badge colors on desktop; confirmed a clean single-column stack at 375px mobile width with no overflow.
+
+---
+
+## RESUME HERE — All of this round (outing leave/delete, relative dates, friend-remove, the two polish fixes) plus the "How it works" section is done and about to be committed together. Next: back to Day 2's original remaining items — tests/CI, then the README deferred-items note.
 
 **Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:
 
