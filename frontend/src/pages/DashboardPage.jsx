@@ -1,5 +1,25 @@
 import {useState, useEffect, useRef} from "react"
 import {useNavigate, Link} from "react-router-dom"
+
+function formatDateTime(dateInput) {
+  const date = new Date(dateInput)
+  const diffDays = (date - new Date()) / (1000 * 60 * 60 * 24)
+  const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  if (diffDays >= 0 && diffDays < 7) {
+    return `${date.toLocaleDateString([], { weekday: "long" })}, ${time}`
+  }
+  return `${date.toLocaleDateString()}, ${time}`
+}
+
+function formatRange(startInput, endInput) {
+  const start = new Date(startInput)
+  const end = new Date(endInput)
+  if (start.toDateString() === end.toDateString()) {
+    return `${formatDateTime(start)} – ${end.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+  }
+  return `${formatDateTime(start)} – ${formatDateTime(end)}`
+}
+
 function DashboardPage() {
   const navigate = useNavigate()
   useEffect(() => {
@@ -388,7 +408,7 @@ function DashboardPage() {
                 <p className="empty-state">You're currently marked as free:</p>
                 {myAvailability.map(window => (
                   <p className="list-row" key={window.id}>
-                    {new Date(window.start_time).toLocaleString()} – {new Date(window.end_time).toLocaleString()}
+                    {formatRange(window.start_time, window.end_time)}
                   </p>
                 ))}
               </div>
@@ -413,7 +433,7 @@ function DashboardPage() {
                   <div className="avatar avatar-plum match-avatar-right">{friend.email[0].toUpperCase()}</div>
                 </div>
                 <p className="match-card-title">You and {friend.email} are free</p>
-                <p className="match-card-time">{new Date(friend.overlap_start).toLocaleString()} – {new Date(friend.overlap_end).toLocaleString()}</p>
+                <p className="match-card-time">{formatRange(friend.overlap_start, friend.overlap_end)}</p>
               </div>
             ))}
           </div>
@@ -438,7 +458,7 @@ function DashboardPage() {
           {currentOutings.map(outing => (
             <div className="list-row list-row--stacked" key={outing.id}>
               <strong>{outing.title}</strong>
-              <span>{outing.location} — {new Date(outing.proposed_time).toLocaleString()}</span>
+              <span>{outing.location} — {formatDateTime(outing.proposed_time)}</span>
               <span className="empty-state">
                 With {[outing.creator_email, ...outing.accepted_invitee_emails].filter((email, i, all) => all.indexOf(email) === i && email !== currentUser?.email).join(", ") || "just you so far"}
               </span>

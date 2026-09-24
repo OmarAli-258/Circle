@@ -755,6 +755,16 @@ Built first: **accepted invitees get "Leave," the creator gets "Delete."** New e
 
 **Status**: Phase C and Phase D (all 3 original parts) are fully done and committed. Day 2's original items 7–8 (tests/CI, README deferred-items note) are still outstanding, now queued behind this new round of fixes the user found by using the app. Nothing half-finished.
 
+### Relative date formatting — weekday names within a week, real dates beyond it
+
+Every date/time shown anywhere (Availability reminder, Match overlap, Current Outings) was a raw `toLocaleString()` dump — technically correct, not pleasant to read. Added two small helpers at module scope in `DashboardPage.jsx` (not inside the component — they don't touch state/props, so no reason to recreate them every render): `formatDateTime(date)` shows a weekday name (`"Thursday, 8:00 PM"`) when the date is 0–6 days out, otherwise falls back to a real localized date; `formatRange(start, end)` builds on it and additionally collapses the common case where both ends fall on the same calendar day into one weekday plus a compact time range (`"Thursday, 8:00 PM – 10:00 PM"`) instead of repeating the weekday twice — matching the exact "Saturday, 6-8pm" convention the very first landing-page match-card mockup already used, just never carried through to the real dashboard until now. All three raw-date call sites swapped over; nothing else about those sections changed.
+
+**Verified for real:** near dates (today through 6 days out) correctly show as a weekday name across Availability, Matches, and Current Outings; a deliberately far outing (~6 months out) correctly fell back to a real calendar date (`"3/15/2027, 3:00 PM"`) instead of a weekday, proving the 7-day cutoff actually works, not just the near case; checked at 375px mobile width too, no layout regression.
+
+---
+
+## RESUME HERE — Relative date formatting is done. Next: the always-visible friend-remove button — same one-at-a-time rhythm, last item in this round before returning to Day 2's tests/CI + README.
+
 **Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:
 
 **Keep — concrete day-by-day plan (2 days, ~3hrs/day, ~6hrs total):**
