@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.models import User, FriendRequest, Availability, Outing, OutingInvite
-from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut, FriendRequestCreate, AvailabilityCreate, AvailabilityOut, OutingCreate, OutingOut,OutingInviteOut
+from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut, FriendRequestCreate, AvailabilityCreate, AvailabilityOut, OutingCreate, OutingOut,OutingInviteOut, CurrentOutingOut
 from app.security import hash_password, verify_password, create_access_token, get_current_user
 from app.utils import get_friend_ids, overlaps
 from sqlalchemy import text, and_, or_
@@ -268,4 +268,40 @@ def my_outing_invites(current_user : User = Depends(get_current_user), db : Sess
             outing_time = outing.proposed_time,
             responded_at = invite.responded_at,
         ))
+    return result
+
+@app.get("/outings/current", response_model=list[CurrentOutingOut])
+def get_current_outings(current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
+    now = datetime.now(timezone.utc)
+    created_outings = db.query(Outing).filter(Outing.creator_id == current_user.id, Outing.proposed_time > now).all()
+    accepted_outing_ids = [invite.outing_id for invite in db.query(OutingInvite).filter(
+        OutingInvite.invitee_id == current_user.id, OutingInvite.status == "accepted"
+    ).all()]
+    accepted_outings = db.query(Outing).filter(
+        Outing.id.in_(accepted_outing_ids), Outing.proposed_time > now
+    ).all() if accepted_outing_ids else []
+
+    outings_by_id = {outing.id: outing for outing in created_outings}
+    for outing in accepted_outings:
+        outings_by_id[outing.id] = outing
+
+    result = []
+    for outing in outings_by_id.values():
+        creator = db.query(User).filter(User.id == outing.creator_id).first()
+        accepted_invites = db.query(OutingInvite).filter(
+            OutingInvite.outing_id == outing.id, OutingInvite.status == "accepted"
+        ).all()
+        accepted_emails = [
+            db.query(User).filter(User.id == invite.invitee_id).first().email
+            for invite in accepted_invites
+        ]
+        result.append(CurrentOutingOut(
+            id=outing.id,
+            title=outing.title,
+            location=outing.location,
+            proposed_time=outing.proposed_time,
+            creator_email=creator.email,
+            accepted_invitee_emails=accepted_emails,
+        ))
+    result.sort(key=lambda o: o.proposed_time)
     return result

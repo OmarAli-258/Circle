@@ -705,9 +705,21 @@ User liked the sidebar+main structure but wanted the whole thing (and the nav ba
 
 **Verified for real:** logged out, hit `/dashboard` directly, got bounced to `/login`, logged in, landed on `/dashboard` (not `/`); separately, on the landing page while logged in, clicked "Sign out" and confirmed it stayed on `/` with the nav/hero switching to Login/Sign up immediately, no navigation at all.
 
+### Phase D, part 1 — a real "Current Outings" section
+
+User raised three related visibility gaps at once, agreed to take one at a time: (1) neither party could see a confirmed outing anywhere — it just silently updated in the background; (2) no reminder of availability you'd already posted; (3) a match doesn't show *which* specific time window overlapped. Starting with (1), the biggest piece.
+
+New backend endpoint, `GET /outings/current`: returns every outing where the current user is either the *creator* (regardless of whether anyone's responded yet) or an invitee who *accepted* — explicitly excluding outings where the user only has a pending or declined invite, since those already have their own place (Outing Invites) or the user opted out. Each result includes `creator_email` and `accepted_invitee_emails` (built manually per outing, same manual-construction style already used for `OutingInviteOut`), so both sides see who's actually confirmed, not just who was invited.
+
+"Removed automatically when its time passes" needed one extra thing first: `Outing.proposed_time` had the *exact same* untreated timezone gap `Availability.start_time`/`end_time` had before today's Phase C fix — a plain naive `TIMESTAMP` column fed by an unconverted `datetime-local` string. Since the whole point of this feature is comparing proposed_time against "now" correctly, shipping it on top of a known-broken time comparison would just bake the same bug into a new feature. Applied the identical fix: model column → `DateTime(timezone=True)`, a real migration (`alembic revision --autogenerate`, reviewed before applying), and `handleCreateOuting` now does `new Date(proposedTime).toISOString()` before sending, exactly like the availability fix.
+
+Frontend: `displayCurrentOutings` (same fetch-and-set pattern as everything else), called on mount and refetched after both creating an outing and accepting an invite — so it appears instantly on the creator's side at creation and on the invitee's side the moment they accept, no reload needed either way. New `Current Outings` section sits between Outing Invites (needs action) and Create Outing (the form) in the center column, each row showing the title, location, a human-readable date/time (`toLocaleString()`, not a raw ISO string), and who's actually confirmed going.
+
+**Verified for real, both directions:** created a real outing from `phaseb_tester` inviting `phaseb_friend` — confirmed it appeared immediately on the creator's side showing "with just you so far" (nobody had accepted yet); accepted it as `phaseb_friend` and confirmed *both* accounts now show it with `phaseb_friend@example.com` listed as confirmed; separately created a deliberately backdated (year-2020) outing and confirmed it correctly never appears in Current Outings at all.
+
 ---
 
-## RESUME HERE — Phase C is done and committed. Next: Phase D (Day 2).
+## RESUME HERE — Phase D part 1 (Current Outings) is done. Next: part 2 (availability reminder), then part 3 (match time details), one at a time per the user's explicit request.
 
 **Status**: All five Phase C bug fixes are implemented, verified for real, and committed. Nothing half-finished. Day 2 remains: Phase D (outings view), tests/CI, README deferred-items note — see the numbered plan below (items 6–8), unchanged from when it was written.
 

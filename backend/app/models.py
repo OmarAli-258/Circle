@@ -31,7 +31,7 @@ class Outing(Base):
     id : Mapped[int] = mapped_column(primary_key=True)
     creator_id : Mapped[int] = mapped_column(ForeignKey("users.id")) 
     title : Mapped[str] = mapped_column()
-    proposed_time : Mapped[datetime] = mapped_column() 
+    proposed_time : Mapped[datetime] = mapped_column(DateTime(timezone=True))
     location : Mapped[str] = mapped_column()
     status : Mapped[str] = mapped_column(default = "open")
     cancellation_message : Mapped[Optional[str]] = mapped_column(nullable=True) 

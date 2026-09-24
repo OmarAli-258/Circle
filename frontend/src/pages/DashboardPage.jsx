@@ -216,13 +216,33 @@ function DashboardPage() {
     displayOutingInvites()
   }, [])
 
+  const [currentOutings, setCurrentOutings] = useState([])
+  async function displayCurrentOutings() {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    const response = await fetch(`http://localhost:8000/outings/current`, {
+      headers : {"Authorization" : `Bearer ${token}`}
+    })
+    if (!response.ok) {
+      localStorage.removeItem("token")
+      navigate("/login")
+      return
+    }
+    const data = await response.json()
+    setCurrentOutings(data)
+  }
+  useEffect(()=>{
+    displayCurrentOutings()
+  }, [])
+
   async function handleAcceptOuting(id) {
     const token = localStorage.getItem("token")
     const response = await fetch(`http://localhost:8000/outing_invites/${id}/accept`,{
       method : "POST",
-      headers : {"Authorization" : `Bearer ${token}`} 
+      headers : {"Authorization" : `Bearer ${token}`}
     })
     displayOutingInvites()
+    displayCurrentOutings()
   }
 
   async function handleDeclineOuting(id) {
@@ -258,7 +278,7 @@ function DashboardPage() {
       headers : {
         "Content-Type" : "application/json",
         "Authorization" : `Bearer ${token}`},
-      body : JSON.stringify({title : outingTitle ,location : outingLocation , proposed_time :proposedTime,
+      body : JSON.stringify({title : outingTitle ,location : outingLocation , proposed_time : new Date(proposedTime).toISOString(),
         invitee_ids : invitedFriends})
     })
     const data = await response.json()
@@ -269,6 +289,7 @@ function DashboardPage() {
       setInvitedFriends([])
       setOutingMessage("Outing created")
       setOutingMessageIsError(false)
+      displayCurrentOutings()
     } else{
       setOutingMessage(data.detail)
       setOutingMessageIsError(true)
@@ -360,6 +381,20 @@ function DashboardPage() {
                 <button className="btn-secondary" onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
               </span>
             </p>
+          ))}
+          </div>
+          )}
+          {currentOutings.length > 0 && (
+          <div className="dashboard-section">
+          <h3>Current Outings</h3>
+          {currentOutings.map(outing => (
+            <div className="list-row list-row--stacked" key={outing.id}>
+              <strong>{outing.title}</strong>
+              <span>{outing.location} — {new Date(outing.proposed_time).toLocaleString()}</span>
+              <span className="empty-state">
+                With {[outing.creator_email, ...outing.accepted_invitee_emails].filter((email, i, all) => all.indexOf(email) === i && email !== currentUser?.email).join(", ") || "just you so far"}
+              </span>
+            </div>
           ))}
           </div>
           )}
