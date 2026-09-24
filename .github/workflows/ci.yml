@@ -14,6 +14,7 @@ jobs:
       # tests never touch this - they use an in-memory SQLite db (see tests/conftest.py) -
       # but importing the app requires the setting to exist at all, since it has no default.
       DATABASE_URL: postgresql+psycopg://unused:unused@localhost/unused
+      JWT_SECRET: ci-only-secret-not-a-real-deployment-value-000000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
