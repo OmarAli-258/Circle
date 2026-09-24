@@ -844,3 +844,15 @@ If Day 1 runs long (likely, given item 5), let item 6 slide rather than rushing 
 - **Still genuinely deferred:** dark mode (cosmetic, skip) and actual deployment (flagged as the highest-variance item since day one — if time runs out, cut this first, keep a polished local demo + README + screenshots). Deployment-safety prep (env-configurable API URL, hiding the DB port, a real JWT secret) only matters once deployment is actually happening, so it waits alongside it.
 
 **Workflow reminder**: one piece at a time, explain what changed in plain language after each, commit, then move to the next — user confirms before continuing.
+
+## Tests + CI
+
+Re-explained `assert` and what "CI" actually means (Continuous Integration: every push automatically gets a fresh machine that installs everything from scratch and runs the test suite, catching a break the moment it happens instead of whenever someone next runs tests by hand) before writing either.
+
+**Tests** (`backend/tests/`), scoped to logic that's genuinely worth testing rather than padding: `overlaps()` (a real overlap, one under the 30-minute minimum, and no overlap at all — the three cases that actually matter for that function), `get_friend_ids()` (finds an accepted friend from either side of the relationship, correctly ignores a still-pending one), and `User.display_name` (the username-or-email fallback from yesterday). `get_friend_ids` needs a real database to query against, so added a `conftest.py` fixture using an in-memory SQLite database, created fresh per test — genuinely exercises the SQLAlchemy query, not mocked, but doesn't need the real Postgres container running. Added `pytest` via a separate `requirements-dev.txt` (`-r requirements.txt` plus `pytest`) rather than the main `requirements.txt`, so test tooling doesn't ship with the actual app.
+
+**Verified for real, not just assumed:** ran the full suite inside the actual backend container (`docker compose exec backend python -m pytest tests/ -v`) — all 7 tests pass.
+
+**CI** (`.github/workflows/ci.yml`): two jobs. `backend-tests` installs from `requirements-dev.txt` and runs `pytest` — no Postgres service needed in the workflow at all, since the tests use SQLite in-memory. `frontend-build` runs the existing `oxlint` script plus `vite build`, catching a syntax error or broken build before it'd ever reach a demo. Checked both frontend steps actually pass locally before trusting the workflow file: lint exits 0 (it has pre-existing warnings — unused `response` variables, a few missing `useEffect` dependencies — but warnings don't fail the command, and fixing them wasn't part of what was asked here), and `vite build` completes cleanly.
+
+Not yet committed — ready for review.
