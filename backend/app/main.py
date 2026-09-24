@@ -6,6 +6,7 @@ from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut,
 from app.security import hash_password, verify_password, create_access_token, get_current_user
 from app.utils import get_friend_ids, overlaps
 from sqlalchemy import text, and_, or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from app.database import get_db
 
@@ -82,7 +83,13 @@ def send_friend_request(request_data :FriendRequestCreate, current_user : User =
         status="pending",
     )
     db.add(new_request)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # the check above already covers the normal case - this only fires if
+        # two requests between the same pair raced past it at the same instant
+        db.rollback()
+        raise HTTPException(status_code=400, detail="friend request already pending")
     db.refresh(new_request)
     return FriendRequestOut(
         id=new_request.id,
@@ -218,7 +225,8 @@ def get_availability_matches(current_user: User = Depends(get_current_user), db:
 @app.post("/outings",response_model=OutingOut)
 def create_outings(outing_data : OutingCreate, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     friend_ids = get_friend_ids(current_user.id, db)
-    for invitee_id in outing_data.invitee_ids:
+    unique_invitee_ids = list(dict.fromkeys(outing_data.invitee_ids))  # de-duplicate, keep order
+    for invitee_id in unique_invitee_ids:
         if invitee_id not in friend_ids:
             raise HTTPException(status_code=400, detail="invitee is not a friend")
     new_outing = Outing(
@@ -229,13 +237,18 @@ def create_outings(outing_data : OutingCreate, current_user : User = Depends(get
         status = "open"
     )
     db.add(new_outing)
-    db.commit()
-    db.refresh(new_outing)
-    for invitee_id in outing_data.invitee_ids:
+    db.flush()  # assigns new_outing.id without committing, so the outing and
+                # its invites are created as a single all-or-nothing transaction
+    for invitee_id in unique_invitee_ids:
         invite = OutingInvite(outing_id=new_outing.id, invitee_id=invitee_id, status= "pending")
         db.add(invite)
-    db.commit()
-    return new_outing  
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="could not create outing invites")
+    db.refresh(new_outing)
+    return new_outing
 
 @app.post("/outing_invites/{invite_id}/accept", response_model=OutingInviteOut)
 def accept_outing_invite(invite_id : int ,current_user : User = Depends(get_current_user) , db : Session = Depends(get_db)):

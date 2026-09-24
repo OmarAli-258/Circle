@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
-from app.models import User, FriendRequest
+from app.models import FriendRequest
 from app.utils import overlaps, get_friend_ids
+from conftest import make_user
 
 
 def test_real_overlap_is_detected():
@@ -48,14 +49,6 @@ def test_overlap_with_enough_real_time_remaining_still_counts():
         start + timedelta(hours=3, minutes=5), start + timedelta(hours=10),
         now=now,
     ) is True
-
-
-def make_user(db, email, username):
-    user = User(email=email, username=username, hashed_password="not-a-real-hash")
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
 
 
 def test_get_friend_ids_finds_accepted_friend_from_either_side(db):
