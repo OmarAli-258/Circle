@@ -36,23 +36,23 @@ function DashboardPage() {
   }, [])
 
   const [friends, setFriends] = useState([])
-  useEffect(() => {
-    async function displayFriends(){
-      const token = localStorage.getItem("token")
-      if (!token) return
-      const response = await fetch("http://localhost:8000/friends", {
-        headers: {"Authorization": `Bearer ${token}` },
-      })
-      if (!response.ok) {
-        localStorage.removeItem("token")
-        navigate("/login")
-        return
-      }
-      const data = await response.json()
-      setFriends(data)
+  async function displayFriends(){
+    const token = localStorage.getItem("token")
+    if (!token) return
+    const response = await fetch("http://localhost:8000/friends", {
+      headers: {"Authorization": `Bearer ${token}` },
+    })
+    if (!response.ok) {
+      localStorage.removeItem("token")
+      navigate("/login")
+      return
     }
+    const data = await response.json()
+    setFriends(data)
+  }
+  useEffect(() => {
     displayFriends()
-  }, []) 
+  }, [])
   const [friendsList, setFriendsList] = useState([])
   async function displayFriendsList(){
     const token= localStorage.getItem("token")
@@ -78,6 +78,7 @@ function DashboardPage() {
       headers: {"Authorization" : `Bearer ${token}` }
     })
     displayFriendsList()
+    displayFriends()
   }
   async function handleDecline(id){
     const token = localStorage.getItem("token")
@@ -130,7 +131,7 @@ function DashboardPage() {
         "Content-Type" : "application/json",
         "Authorization" : `Bearer ${token}`
       },
-      body : JSON.stringify({ start_time: availabilityStart, end_time : availabilityEnd})
+      body : JSON.stringify({ start_time: new Date(availabilityStart).toISOString(), end_time: new Date(availabilityEnd).toISOString() })
     })
     const data = await response.json()
     if (response.ok) {
@@ -138,6 +139,7 @@ function DashboardPage() {
       setAvailabilityEnd("")
       setAvailabilityMessage("Availability Set")
       setAvailabilityMessageIsError(false)
+      displayMatched()
     } else {
       setAvailabilityMessage(data.detail)
       setAvailabilityMessageIsError(true)
@@ -169,31 +171,31 @@ function DashboardPage() {
       matchObserverRef.current.observe(el)
     }
   }
-  useEffect(()=>{
-    async function displayMatched() {
-      const token = localStorage.getItem("token")
-      if (!token) return
-      const response = await fetch(`http://localhost:8000/availability/matches`, {
-        headers : { "Authorization" : `Bearer ${token}`}
-      })
-      if (!response.ok) {
-        localStorage.removeItem("token")
-        navigate("/login")
-        return
-      }
-      const data = await response.json()
-      setMatchedFriends(data)
-
-      if (seenAtLoadRef.current === null) {
-        seenAtLoadRef.current = JSON.parse(localStorage.getItem("seenMatchIds") || "[]")
-      }
-      const seenMatchIds = seenAtLoadRef.current
-      const newIds = data.filter(friend => !seenMatchIds.includes(friend.id)).map(friend => friend.id)
-      setNewMatchIds(newIds)
-      localStorage.setItem("seenMatchIds", JSON.stringify([...seenMatchIds, ...newIds]))
+  async function displayMatched() {
+    const token = localStorage.getItem("token")
+    if (!token) return
+    const response = await fetch(`http://localhost:8000/availability/matches`, {
+      headers : { "Authorization" : `Bearer ${token}`}
+    })
+    if (!response.ok) {
+      localStorage.removeItem("token")
+      navigate("/login")
+      return
     }
+    const data = await response.json()
+    setMatchedFriends(data)
+
+    if (seenAtLoadRef.current === null) {
+      seenAtLoadRef.current = JSON.parse(localStorage.getItem("seenMatchIds") || "[]")
+    }
+    const seenMatchIds = seenAtLoadRef.current
+    const newIds = data.filter(friend => !seenMatchIds.includes(friend.id)).map(friend => friend.id)
+    setNewMatchIds(newIds)
+    localStorage.setItem("seenMatchIds", JSON.stringify([...seenMatchIds, ...newIds]))
+  }
+  useEffect(()=>{
     displayMatched()
-    }, [])
+  }, [])
   
   const [outingInvites, setOutinginvites] = useState([])
   async function displayOutingInvites() {

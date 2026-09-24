@@ -688,20 +688,29 @@ User liked the sidebar+main structure but wanted the whole thing (and the nav ba
 
 ---
 
-## RESUME HERE — Phase B is done and committed. Next: Phase C.
+## 2026-09-24 — Phase C, all five real bug fixes
 
-**Status**: Phase B is fully done — final shape is a single merged Friends/Friend-Requests sidebar (260px) beside one main column (844px), the whole block naturally sized and centered (not stretched to fill the screen), nav widened to match at 1120px. Went through five real rounds of feedback before landing (flex row → 3-column stretch/sticky exploration → equal partial-fill rails → sidebar merge fixing the root cause → final width match with nav). Committed. Nothing half-finished.
+1. **Refetch Friends after accept** — `displayFriends` was defined *inside* its own `useEffect`, so nothing outside that effect (like `handleAccept`) could call it; `handleAccept` only ever refetched the pending-requests list. Pulled it out to a named function (same pattern `displayFriendsList` already used) and called it from `handleAccept`. `handleDecline` doesn't need it — declining never changes the Friends list.
+2. **Refetch Matches after posting availability** — same shape of bug: `displayMatched` lived inside its own `useEffect`. Pulled it out and called it from `handlePostAvailabilty` on a successful post. The existing "seen match" `useRef` snapshot logic didn't need any change — calling `displayMatched()` again correctly treats a genuinely new match as new without re-reading `localStorage`.
+3. **Block duplicate friend requests** — `send_friend_request` had zero check for an existing request before inserting one. Added a query for any existing `pending` or `accepted` `FriendRequest` between the two users *in either direction* (`or_`/`and_` on requester/recipient both ways), returning "you are already friends" or "friend request already pending" instead of silently creating a duplicate row.
+4. **Stop expired availability from matching** — `get_availability_matches` had no time filtering at all; a window from last year would happily "match" forever. Added `Availability.end_time > now` to both the current user's and friends' window queries.
+5. **Timezone handling** — the real fix, touching both sides. `datetime-local` inputs were sent to the backend as bare local-time strings with zero timezone info, and the `Availability.start_time`/`end_time` columns were plain naive `TIMESTAMP` (no timezone stored at all) — meaning two friends in different timezones posting "7pm" would incorrectly "overlap" even if actually hours apart in real time. Fixed properly: frontend now does `new Date(value).toISOString()` before `POST`ing (browser correctly treats a bare `datetime-local` string as local time, per spec, and converts to true UTC); backend model columns changed to `DateTime(timezone=True)` via a real Alembic migration (`alembic revision --autogenerate`, checked the generated `alter_column` before applying); the new expiry check's `now` changed from naive `datetime.utcnow()` to timezone-aware `datetime.now(timezone.utc)` to stay consistent with the now-aware column.
+
+**Verified for real, not just assumed:** accepted a real pending request in the browser and watched it move into Friends with zero reload; sent a request to an existing friend (blocked as "you are already friends") and to someone with a request already pending in the other direction (blocked as "friend request already pending"); posted a `20:00–22:00` local availability window through the real form and confirmed via the network response it was stored as `19:00:00Z–21:00:00Z` (this environment's browser is UTC+1) — proving the conversion is real, not assumed; created a genuinely overlapping availability pair between two *already-expired* (year-2020) windows via the API directly and confirmed the match list correctly excluded it, while a real current overlap (with Emma) still correctly appeared.
+
+---
+
+## RESUME HERE — Phase C is done and committed. Next: Phase D (Day 2).
+
+**Status**: All five Phase C bug fixes are implemented, verified for real, and committed. Nothing half-finished. Day 2 remains: Phase D (outings view), tests/CI, README deferred-items note — see the numbered plan below (items 6–8), unchanged from when it was written.
+
+**Status (superseded by the above — kept for the width-decision history)**: Phase B is fully done — final shape is a single merged Friends/Friend-Requests sidebar (260px) beside one main column (844px), the whole block naturally sized and centered (not stretched to fill the screen), nav widened to match at 1120px. Went through five real rounds of feedback before landing (flex row → 3-column stretch/sticky exploration → equal partial-fill rails → sidebar merge fixing the root cause → final width match with nav). Committed. Nothing half-finished.
 
 **Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:
 
 **Keep — concrete day-by-day plan (2 days, ~3hrs/day, ~6hrs total):**
 
-**Day 1 — Phase C, real bug fixes (~2–2.5 hrs total):**
-1. Refetch Friends list after accept/decline — right now only the pending-requests list refetches, so a newly-accepted friend doesn't show up in Friends until a full page reload. (~15–20 min)
-2. Refetch Matches after posting availability — posting a window doesn't re-check for a match until the next full page load. (~15–20 min)
-3. Prevent duplicate friend requests — no check today before creating a new one; add a lookup for an existing pending/accepted request between the two users before inserting. (~20–30 min)
-4. Fix old/expired availability still counting as a match — the matching query has zero time filtering right now; add a check that a window's `end_time` hasn't already passed. (~30–45 min)
-5. Timezone handling in the overlap check — `datetime-local` inputs send a naive value with no timezone info at all right now. Real fix touches both sides: convert the local time to UTC in the frontend before `POST`ing, and confirm the backend treats stored/compared times consistently as UTC. This is the trickiest one of the five — budget the most time and expect a genuine debugging pass, not a one-line fix. (~45–60 min)
+**Day 1 — Phase C, real bug fixes — ✅ done, see the 2026-09-24 section above for what actually shipped.**
 
 **Day 2 — Phase D + tests/CI (~2–2.5 hrs total), then stop and call it CV-ready:**
 6. **Phase D** — add an actual "your outings" section: check what the backend already exposes for accepted outings (may need a small new endpoint), then a frontend section listing them — accepted outings currently vanish with nowhere to see them again. (~60–90 min)

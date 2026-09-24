@@ -5,7 +5,7 @@ from app.models import User, FriendRequest, Availability, Outing, OutingInvite
 from app.schemas import UserCreate, UserOut, UserLogin, Token, FriendRequestOut, FriendRequestCreate, AvailabilityCreate, AvailabilityOut, OutingCreate, OutingOut,OutingInviteOut
 from app.security import hash_password, verify_password, create_access_token, get_current_user
 from app.utils import get_friend_ids, overlaps
-from sqlalchemy import text
+from sqlalchemy import text, and_, or_
 from sqlalchemy.orm import Session
 from app.database import get_db
 
@@ -61,6 +61,17 @@ def send_friend_request(request_data :FriendRequestCreate, current_user : User =
         raise HTTPException(status_code= 400, detail="cannot send friend request to yourself")
     if not recipient:
         raise HTTPException(status_code=404, detail="user not found")
+    existing_request = db.query(FriendRequest).filter(
+        or_(
+            and_(FriendRequest.requester_id == current_user.id, FriendRequest.recipient_id == recipient.id),
+            and_(FriendRequest.requester_id == recipient.id, FriendRequest.recipient_id == current_user.id),
+        ),
+        FriendRequest.status.in_(["pending", "accepted"]),
+    ).first()
+    if existing_request:
+        if existing_request.status == "accepted":
+            raise HTTPException(status_code=400, detail="you are already friends")
+        raise HTTPException(status_code=400, detail="friend request already pending")
     new_request= FriendRequest(
         requester_id=current_user.id,
         recipient_id=recipient.id,
@@ -140,8 +151,9 @@ def create_availability(availability_data: AvailabilityCreate, current_user: Use
 @app.get("/availability/matches", response_model=list[UserOut])
 def get_availability_matches(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     friend_ids = get_friend_ids(current_user.id, db)
-    my_windows= db.query(Availability).filter(Availability.user_id == current_user.id).all()
-    friend_windows= db.query(Availability).filter(Availability.user_id.in_(friend_ids)).all()
+    now = datetime.now(timezone.utc)
+    my_windows= db.query(Availability).filter(Availability.user_id == current_user.id, Availability.end_time > now).all()
+    friend_windows= db.query(Availability).filter(Availability.user_id.in_(friend_ids), Availability.end_time > now).all()
     matched_user_ids=[]
     for my_window in my_windows:
         for friend_window in friend_windows:
