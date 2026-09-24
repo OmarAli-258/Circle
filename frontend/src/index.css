@@ -31,8 +31,11 @@
   --font-body: "Inter", system-ui, sans-serif;
 }
 
+/* dark palette lives in two places: applied automatically here when the OS
+   prefers dark (unless the user explicitly picked light), and again below
+   as a manual override so the toggle also works on a light-OS browser. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --cream: #201a14;
     --cream-deep: #2a2119;
     --surface: #2c231c;
@@ -53,6 +56,28 @@
     --danger: #e07272;
     --success: #6fbd7a;
   }
+}
+
+:root[data-theme="dark"] {
+  --cream: #201a14;
+  --cream-deep: #2a2119;
+  --surface: #2c231c;
+  --border: #4a3d30;
+  --text: #f2e6d6;
+  --text-muted: #b8a58c;
+
+  --coral: #f0925f;
+  --coral-hover: #f5a878;
+  --coral-bg: #3a2a20;
+  --coral-border: #6b4632;
+
+  --plum: #c186b3;
+  --plum-hover: #cd9bc1;
+  --plum-bg: #362530;
+  --plum-border: #5c3f54;
+
+  --danger: #e07272;
+  --success: #6fbd7a;
 }
 
 * {
@@ -455,6 +480,20 @@ nav a[href="/dashboard"]:hover {
 
 nav a[href="/signup"]:hover {
   background: var(--coral-hover);
+}
+
+.theme-toggle {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+.theme-toggle:hover {
+  background: var(--cream-deep);
 }
 
 .hero {

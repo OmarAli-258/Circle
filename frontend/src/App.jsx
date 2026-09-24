@@ -1,10 +1,16 @@
+import { useEffect } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import LandingPage from "./pages/LandingPage"
 import SignupPage from "./pages/SignupPage"
 import LoginPage from "./pages/LoginPage"
 import DashboardPage from "./pages/DashboardPage"
+import { getPreferredTheme } from "./theme"
 
 function App() {
+  useEffect(() => {
+    document.documentElement.dataset.theme = getPreferredTheme()
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>

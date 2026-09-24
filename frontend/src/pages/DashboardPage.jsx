@@ -1,5 +1,6 @@
 import {useState, useEffect, useRef} from "react"
 import {useNavigate, Link} from "react-router-dom"
+import ThemeToggle from "../components/ThemeToggle"
 
 function formatDateTime(dateInput) {
   const date = new Date(dateInput)
@@ -387,6 +388,9 @@ function DashboardPage() {
     <>
     <nav>
       <Link to="/" className="nav-logo"><span>Circle</span></Link>
+      <div>
+        <ThemeToggle />
+      </div>
     </nav>
     <div className="page-container">
       <div className="page-header">

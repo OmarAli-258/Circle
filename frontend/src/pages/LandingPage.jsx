@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import ThemeToggle from "../components/ThemeToggle"
 
 function LandingPage() {
     const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("token"))
@@ -14,6 +15,7 @@ function LandingPage() {
             <nav>
                 <Link to="/" className="nav-logo"><span>Circle</span></Link>
                 <div>
+                    <ThemeToggle />
                     {isLoggedIn ? (
                         <Link to="/dashboard">Dashboard</Link>
                     ) : (
