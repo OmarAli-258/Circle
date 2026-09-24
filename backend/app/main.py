@@ -34,8 +34,12 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == user_data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="email already registered")
+    existing_username = db.query(User).filter(User.username == user_data.username).first()
+    if existing_username:
+        raise HTTPException(status_code=400, detail="username already taken")
     new_user = User(
         email=user_data.email,
+        username=user_data.username,
         hashed_password=hash_password(user_data.password)
     )
     db.add(new_user)
@@ -84,6 +88,7 @@ def send_friend_request(request_data :FriendRequestCreate, current_user : User =
         id=new_request.id,
         requester_id=new_request.requester_id,
         requester_email=current_user.email,
+        requester_display_name=current_user.display_name,
         recipient_id=new_request.recipient_id,
         status=new_request.status,
         created_at=new_request.created_at,
@@ -105,6 +110,7 @@ def accept_friend_request(request_id: int, current_user : User = Depends(get_cur
         id=friend_request.id,
         requester_id=friend_request.requester_id,
         requester_email=requester.email,
+        requester_display_name=requester.display_name,
         recipient_id=friend_request.recipient_id,
         status=friend_request.status,
         created_at=friend_request.created_at,
@@ -126,6 +132,7 @@ def decline_friend_request(request_id: int, current_user : User = Depends(get_cu
         id=friend_request.id,
         requester_id=friend_request.requester_id,
         requester_email=requester.email,
+        requester_display_name=requester.display_name,
         recipient_id=friend_request.recipient_id,
         status=friend_request.status,
         created_at=friend_request.created_at,
@@ -155,6 +162,7 @@ def remove_friend(friend_id: int, current_user: User = Depends(get_current_user)
         id=friend_request.id,
         requester_id=friend_request.requester_id,
         requester_email=requester.email,
+        requester_display_name=requester.display_name,
         recipient_id=friend_request.recipient_id,
         status=friend_request.status,
         created_at=friend_request.created_at,
@@ -200,6 +208,7 @@ def get_availability_matches(current_user: User = Depends(get_current_user), db:
         result.append(MatchOut(
             id=friend.id,
             email=friend.email,
+            display_name=friend.display_name,
             created_at=friend.created_at,
             overlap_start=overlap_start,
             overlap_end=overlap_end,
@@ -290,6 +299,7 @@ def my_friend_requests(current_user : User = Depends(get_current_user), db : Ses
             id=request.id,
             requester_id=request.requester_id,
             requester_email=requester.email,
+            requester_display_name=requester.display_name,
             recipient_id=request.recipient_id,
             status=request.status,
             created_at=request.created_at,
@@ -336,8 +346,8 @@ def get_current_outings(current_user : User = Depends(get_current_user), db : Se
         accepted_invites = db.query(OutingInvite).filter(
             OutingInvite.outing_id == outing.id, OutingInvite.status == "accepted"
         ).all()
-        accepted_emails = [
-            db.query(User).filter(User.id == invite.invitee_id).first().email
+        accepted_invitees = [
+            db.query(User).filter(User.id == invite.invitee_id).first()
             for invite in accepted_invites
         ]
         result.append(CurrentOutingOut(
@@ -346,7 +356,9 @@ def get_current_outings(current_user : User = Depends(get_current_user), db : Se
             location=outing.location,
             proposed_time=outing.proposed_time,
             creator_email=creator.email,
-            accepted_invitee_emails=accepted_emails,
+            creator_display_name=creator.display_name,
+            accepted_invitee_emails=[invitee.email for invitee in accepted_invitees],
+            accepted_invitee_display_names=[invitee.display_name for invitee in accepted_invitees],
         ))
     result.sort(key=lambda o: o.proposed_time)
     return result

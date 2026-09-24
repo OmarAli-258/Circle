@@ -371,7 +371,7 @@ function DashboardPage() {
       <div className="page-header">
         <h2>Dashboard</h2>
         <div className="page-header-right">
-          {currentUser && <p>Logged in as {currentUser.email}</p>}
+          {currentUser && <p>Logged in as {currentUser.display_name}</p>}
           <button className="btn-secondary" onClick = {() => handleLogout()}>Logout</button>
         </div>
       </div>
@@ -383,7 +383,7 @@ function DashboardPage() {
             {friends.length === 0 && <p className="empty-state">No friends yet — send a request below to get started.</p>}
             {friends.map(friend => (
               <p className="list-row" key ={friend.id}>
-                <span title={friend.email}>{friend.email}</span>
+                <span title={friend.display_name}>{friend.display_name}</span>
                 <button className="btn-secondary" onClick={() => handleRemoveFriend(friend.id)}>Remove</button>
               </p>
             ))}
@@ -393,7 +393,7 @@ function DashboardPage() {
           <div className="dashboard-sidebar-section dashboard-sidebar-section--divider">
             <h3>Friend Requests</h3>
             {friendsList.map(friend_request => ( <p className="list-row" key = {friend_request.id}>
-              <span title={friend_request.requester_email}>{friend_request.requester_email}</span>
+              <span title={friend_request.requester_display_name}>{friend_request.requester_display_name}</span>
               <span className="row-actions">
                 <button onClick={() => handleAccept(friend_request.id)}>Accept</button>
                 <button className="btn-secondary" onClick={() => handleDecline(friend_request.id)}>Decline</button>
@@ -442,10 +442,10 @@ function DashboardPage() {
               <div key={friend.id} data-friend-id={friend.id} ref={observeMatchCard} className={newMatchIds.includes(friend.id) && visibleMatchIds.includes(friend.id) ? "match-card match-card--animate" : "match-card match-card--settled"}>
                 <p className="match-card-label">You're both free</p>
                 <div className="match-card-avatars">
-                  <div className="avatar avatar-coral match-avatar-left">{currentUser?.email?.[0]?.toUpperCase()}</div>
-                  <div className="avatar avatar-plum match-avatar-right">{friend.email[0].toUpperCase()}</div>
+                  <div className="avatar avatar-coral match-avatar-left">{currentUser?.display_name?.[0]?.toUpperCase()}</div>
+                  <div className="avatar avatar-plum match-avatar-right">{friend.display_name[0].toUpperCase()}</div>
                 </div>
-                <p className="match-card-title">You and {friend.email} are free</p>
+                <p className="match-card-title">You and {friend.display_name} are free</p>
                 <p className="match-card-time">{formatRange(friend.overlap_start, friend.overlap_end)}</p>
               </div>
             ))}
@@ -473,7 +473,12 @@ function DashboardPage() {
               <strong>{outing.title}</strong>
               <span>{outing.location} — {formatDateTime(outing.proposed_time)}</span>
               <span className="empty-state">
-                With {[outing.creator_email, ...outing.accepted_invitee_emails].filter((email, i, all) => all.indexOf(email) === i && email !== currentUser?.email).join(", ") || "just you so far"}
+                With {[
+                  { email: outing.creator_email, name: outing.creator_display_name },
+                  ...outing.accepted_invitee_emails.map((email, i) => ({ email, name: outing.accepted_invitee_display_names[i] })),
+                ].filter((person, i, all) => all.findIndex(p => p.email === person.email) === i && person.email !== currentUser?.email)
+                 .map(person => person.name)
+                 .join(", ") || "just you so far"}
               </span>
               <span className="row-actions">
                 {outing.creator_email === currentUser?.email ? (
@@ -498,7 +503,7 @@ function DashboardPage() {
               {friends.map(friend => (
                 <label key={friend.id}>
                   <input type="checkbox" checked={invitedFriends.includes(friend.id)} onChange={() => toggleInvitedFriends(friend.id)} />
-                  {friend.email}
+                  {friend.display_name}
                 </label>
               ))}
               <button type="submit" disabled={creatingOuting}>{creatingOuting ? "Creating..." : "Create Outing"}</button>

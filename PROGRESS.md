@@ -790,7 +790,21 @@ Given the time left, the user handed over what was originally their own task (wr
 
 ---
 
-## RESUME HERE — All of this round (outing leave/delete, relative dates, friend-remove, the two polish fixes) plus the "How it works" section is done and about to be committed together. Next: back to Day 2's original remaining items — tests/CI, then the README deferred-items note.
+### Phase F — the username field, now in scope after all
+
+Explicitly deferred in yesterday's honest re-cut of the plan (biggest/most invasive remaining piece, low payoff for a demo, and rushed migrations under time pressure are exactly where real bugs happen) — but the user asked for it directly now, aware of the tradeoff, so it goes in properly rather than rushed.
+
+**Scope decision made up front:** username is a *display* property only. Login/signup still authenticate by email — no reason to touch JWTs or the auth flow to add a second identifier. Everywhere the app shows someone's email as their identity (Friends, Friend Requests, Matches — card text and avatar initials, Current Outings — creator and confirmed attendees, "Logged in as," Create Outing checkboxes), it now shows their username instead, once they have one.
+
+**The real problem, solved up front:** every existing account (all of today's and yesterday's test users) has no username — they were created before the field existed. Made the column nullable rather than required, so nothing breaks retroactively; new signups get a required, uniqueness-checked username (same "already taken" pattern the email check already used). A `display_name` property on the `User` model (`username or email`) resolves the fallback in exactly one place — and because Pydantic's `from_attributes` can read a plain Python `@property` just like a real column, endpoints that already returned raw `User` rows (like `/friends`) picked this up with zero extra code, no manual construction needed. Endpoints that build their response by hand (friend requests, matches, current outings) got the same `x.username or x.email` logic added explicitly, via new `*_display_name` fields added alongside the existing `*_email` ones — the raw email fields were kept, not replaced, so nothing else relying on them broke.
+
+One deliberate exception, called out so it isn't mistaken for an oversight: the "am I the creator of this outing" check (which decides whether a Current Outings row shows Delete or Leave) still compares by **email**, not display name — display names aren't guaranteed unique the way emails are, so a comparison that decides UI behavior shouldn't key off them, even though the actual permission is enforced server-side regardless. Same reasoning applied to the "who else is confirmed" list: dedup and self-exclusion happen by email internally, and only the final rendered text uses the display name.
+
+**Verified for real, systematically, both directions of the relationship — not spot-checked:** created a real second account with an actual username (`CoolUsername42`) and befriended, matched, and shared an outing with an existing no-username account (`phaseb_tester`). Checked all six display sites from *both* sides: from `CoolUsername42`'s dashboard, `phaseb_tester` correctly still shows as their email everywhere (Friends, Matches, Current Outings, Create Outing checklist) while `CoolUsername42` sees their own username at the top; from `phaseb_tester`'s dashboard, `CoolUsername42` correctly shows as their username in the exact same six spots, mixed in a list alongside other friends still showing email. Also tested signup's new duplicate-username rejection directly against the API, and ran a real signup through the actual browser form (not curl) to confirm the new Username field works end-to-end, including at 375px mobile width.
+
+---
+
+## RESUME HERE — Username field is fully implemented and verified, not yet committed (user is away from their laptop and asked me to wait for them before committing). Next, once committed: back to Day 2's original remaining items — tests/CI, then the README deferred-items note.
 
 **Deadline update**: user wants to be done *before traveling* (2 days left, ~3hrs/day, soft deadline — not hard, but real) so they have time to focus on job applications afterward. That is not enough time for the full original backlog below, so the plan was honestly re-cut rather than carried forward as-is:
 
@@ -805,11 +819,10 @@ Given the time left, the user handed over what was originally their own task (wr
 
 If Day 1 runs long (likely, given item 5), let item 6 slide rather than rushing timezone handling — a correct, well-tested Phase C matters more for a demo than a finished Phase D.
 
-**Recommended to defer past the deadline (not cancelled — just not now), and say so explicitly in the README as known next steps:**
-- **F** — Username field. Explicitly the biggest/most invasive piece (model + migration + schema + every `.email` display site) — high effort, low payoff for a demo, and a rushed migration under time pressure is exactly where real bugs happen.
-- **E** — Richer match-card details. Pure polish, already slated for "after everything else."
-- Dark mode — cosmetic, skip.
-- Actual deployment — flagged as the single highest-variance item since day one (see the 2026-09-21 deadline note above); if time runs out, cut this first, keep a polished local demo + README + screenshots. Deployment-safety prep (env-configurable API URL, hiding the DB port, a real JWT secret) only matters once deployment is actually happening, so it waits alongside it.
-- **G (user's own work)** — the landing page's "how it works" section, whenever they get to it.
+**Originally recommended to defer — status update, most of this list turned out to get done anyway:**
+- ~~**F** — Username field.~~ Done (see above) — user asked for it directly, aware of the tradeoff.
+- ~~**E** — Richer match-card details.~~ Done — the overlap-time feature (Phase D part 3) covers this.
+- ~~**G** — "How it works" section.~~ Done — handed to me given the time crunch, built and committed.
+- **Still genuinely deferred:** dark mode (cosmetic, skip) and actual deployment (flagged as the highest-variance item since day one — if time runs out, cut this first, keep a polished local demo + README + screenshots). Deployment-safety prep (env-configurable API URL, hiding the DB port, a real JWT secret) only matters once deployment is actually happening, so it waits alongside it.
 
 **Workflow reminder**: one piece at a time, explain what changed in plain language after each, commit, then move to the next — user confirms before continuing.

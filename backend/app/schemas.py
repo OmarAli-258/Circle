@@ -2,12 +2,15 @@ from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
-class UserCreate(BaseModel): 
+class UserCreate(BaseModel):
     email: str
+    username: str
     password: str
 class UserOut(BaseModel):
-    id: int 
+    id: int
     email: str
+    username: Optional[str]
+    display_name: str
     created_at : datetime
     model_config = {"from_attributes": True}
 class UserLogin(BaseModel):
@@ -22,6 +25,7 @@ class FriendRequestOut(BaseModel):
     id : int
     requester_id : int
     requester_email : str
+    requester_display_name : str
     recipient_id : int
     status : str
     created_at : datetime
@@ -67,10 +71,13 @@ class CurrentOutingOut(BaseModel):
     location : str
     proposed_time : datetime
     creator_email : str
+    creator_display_name : str
     accepted_invitee_emails : list[str]
+    accepted_invitee_display_names : list[str]
 class MatchOut(BaseModel):
     id : int
     email : str
+    display_name : str
     created_at : datetime
     overlap_start : datetime
     overlap_end : datetime

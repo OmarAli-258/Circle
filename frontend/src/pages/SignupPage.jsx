@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 
 function SignupPage() {
   const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [message, setMessage] = useState("")
   const [messageIsError, setMessageIsError] = useState(false)
@@ -14,7 +15,7 @@ function SignupPage() {
     const response = await fetch("http://localhost:8000/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, username, password }),
     })
     const data = await response.json()
     if (response.ok) {
@@ -34,6 +35,8 @@ function SignupPage() {
         <form onSubmit={handleSubmit}>
           <label htmlFor="signup-email">Email</label>
           <input id="signup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          <label htmlFor="signup-username">Username</label>
+          <input id="signup-username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
           <label htmlFor="signup-password">Password</label>
           <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
           <button type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing up..." : "Sign up"}</button>
