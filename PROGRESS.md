@@ -955,6 +955,32 @@ That check-in happened: all three (#5, #7, #9) were reviewed and committed as th
 
 **README rewrite.** Feature list, tech stack, and roadmap all predated two weeks of real work — missing username/display names, dark mode, outing leave/delete, "Plan something," availability removal, and still calling CI "planned" when it's been running on every push for a day. Rewrote the feature list to match reality, fixed the CI line, and added a new **Testing & reliability** section calling out the automated tests, CI, and the database-level race-condition safeguards by name — deliberately not buried in `PROGRESS.md` where a recruiter would never see them, since most student portfolio projects have none of this. Trimmed the Roadmap's out-of-scope list to genuine future product ideas only (circles, location presets, recurring availability); deliberately did *not* list the internal deferred items (#8, #15, #19, #20, dark mode's original scope) in the README itself — that's implementation housekeeping, not a recruiter-facing feature roadmap, and `PROGRESS.md` already carries that honestly.
 
+**Small fix, same night:** the datetime-local calendar-picker icon didn't show a pointer cursor on hover, unlike every button/link in the app (user caught this by clicking around). Fixed with `input[type="datetime-local"]::-webkit-calendar-picker-indicator { cursor: pointer; }` — the standard fix for this exact symptom. Couldn't get a reliable computed-style readback on this specific vendor pseudo-element through the browser tool (a known category of limitation, same as earlier scroll/animation checks), so this one is verified by the rule being correct and present, not by a live cursor check — worth a 5-second glance next time the app is open for real.
+
+**Pre-deploy review + full project retrospective:** ran a systematic 10-category check across the whole repo the night before shipping (debug leftovers, secrets hygiene, TODOs, unused imports, bare excepts, CORS scoping, Dockerfile/compose prod-readiness, `.gitignore` coverage, stray files, dependency hygiene) — came back clean on every axis. The only three things flagged (drop `--reload` for prod, update CORS origin, make the API URL configurable) are exactly what deployment prep already covers, not new problems. Also published a full plain-language project retrospective (architecture, every feature, the testing/security story, the journey, this review) as a kept artifact: https://claude.ai/artifact/6k9NxwsvadwrmQuU5YNATC — useful source material for the post-deployment interview-prep loop (see memory: `feedback_interview_prep_loop.md`).
+
 ---
 
-## RESUME HERE — everything for today is done and committed except deployment prep, which is tomorrow (the final day) by explicit plan. Still genuinely deferred, not scheduled: #8 (soften the "mutual reveal" copy), #15 (verify migrations against a truly fresh, never-migrated Postgres — note: this round's migrations *were* applied to the real running dev database, just not a from-scratch one), #19 (accessibility pass), #20 (split the large `DashboardPage.jsx` into smaller components). New screenshots (current ones predate the sidebar layout, Current Outings, and username field) are still needed before the README's images are fully accurate — worth doing alongside deployment tomorrow, once there's a finished app to capture. Next actual session: deployment prep (env-configurable API URL, hide the DB port, drop `--reload`, real production secrets) and deployment itself.
+## RESUME HERE — deployment prep + deployment is the only thing left (the final day). Plan already decided the night before, so this session should be pure execution, not re-deciding anything:
+
+**Platform: Render** (backend Web Service + managed Postgres + frontend Static Site — picked over Fly.io for its simpler dashboard-driven setup, better fit given the user is still new to infra). Confirm this is still the pick before starting, in case the user wants to redirect.
+
+**Part A — code changes, do first:**
+1. Replace hardcoded `http://localhost:8000` in `LoginPage.jsx`/`SignupPage.jsx`/`DashboardPage.jsx` with one env-driven API base URL (Vite convention: `import.meta.env.VITE_API_URL`, with a localhost fallback for local dev).
+2. Make the CORS-allowed origin in `backend/app/main.py` read from an environment variable instead of the hardcoded `http://localhost:5173`.
+3. Drop `--reload` from `backend/Dockerfile`'s uvicorn CMD — dev-only flag, no reason to ship it.
+4. Push the repo to GitHub (no remote exists yet — confirmed via `git remote -v`) — Render deploys from a GitHub repo.
+
+**Part B — provision on Render:**
+5. Postgres database → real `DATABASE_URL`.
+6. Web Service for the backend, built from the existing `Dockerfile` → env vars: `DATABASE_URL`, a **freshly generated** `JWT_SECRET` (not the local dev one), the CORS-origin var.
+7. Static Site for the frontend (`npm install && npm run build`, publish `dist`) → set the API-URL var to the backend's Render URL.
+8. Loop back to the backend once the frontend's real URL exists, set its CORS var to that exact URL.
+
+**Part C — migrate the live database:** same `alembic upgrade head` as always, run via Render's shell into the backend service instead of `docker compose exec`. This is also the first genuinely fresh-database migration run this project has ever done (partially covers deferred item #15).
+
+**Part D — real smoke test on the live URL:** two fresh accounts, friend request, overlapping availability → match, create an outing, accept it — the same loop the integration tests already check, just proving it for real on the public internet.
+
+**Part E — wrap-up:** swap the live URL into the README, fresh screenshots against the current UI (current ones predate the sidebar layout, Current Outings, and the username field), commit.
+
+Still genuinely deferred, not scheduled, no urgency: #8 (soften the "mutual reveal" copy), #19 (accessibility pass), #20 (split the large `DashboardPage.jsx` into smaller components). After deployment is verified working: the interview-prep loop (see memory), not a coding task.
