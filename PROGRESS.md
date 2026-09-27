@@ -961,23 +961,28 @@ That check-in happened: all three (#5, #7, #9) were reviewed and committed as th
 
 ---
 
-## RESUME HERE — deployment prep + deployment is the only thing left (the final day). Plan already decided the night before, so this session should be pure execution, not re-deciding anything:
+## Deployment day (2026-09-27)
 
-**Platform: Render** (backend Web Service + managed Postgres + frontend Static Site — picked over Fly.io for its simpler dashboard-driven setup, better fit given the user is still new to infra). Confirm this is still the pick before starting, in case the user wants to redirect.
+**Platform: Render** (backend Web Service + managed Postgres + frontend Static Site — picked over Fly.io for its simpler dashboard-driven setup). Confirmed, not revisited.
 
-**Part A — code changes, do first:**
-1. Replace hardcoded `http://localhost:8000` in `LoginPage.jsx`/`SignupPage.jsx`/`DashboardPage.jsx` with one env-driven API base URL (Vite convention: `import.meta.env.VITE_API_URL`, with a localhost fallback for local dev).
-2. Make the CORS-allowed origin in `backend/app/main.py` read from an environment variable instead of the hardcoded `http://localhost:5173`.
-3. Drop `--reload` from `backend/Dockerfile`'s uvicorn CMD — dev-only flag, no reason to ship it.
-4. Push the repo to GitHub (no remote exists yet — confirmed via `git remote -v`) — Render deploys from a GitHub repo.
+**Part A — code changes: done.**
+1. `frontend/src/api.js` added, exporting `API_URL` (`import.meta.env.VITE_API_URL`, falling back to `http://localhost:8000` for local dev). All 20 hardcoded occurrences across `LoginPage.jsx`/`SignupPage.jsx`/`DashboardPage.jsx` replaced with it.
+2. `backend/app/config.py` gained `frontend_origin: str = "http://localhost:5173"`; `main.py`'s CORS middleware now reads `settings.frontend_origin` instead of a hardcoded value. Documented in `.env.example` as `FRONTEND_ORIGIN`.
+3. `backend/Dockerfile`'s CMD no longer has `--reload` (this is the exact image Render will build). `--reload` is restored for local dev only via a `command:` override added to `docker-compose.yml`'s `backend` service, so local iteration is completely unaffected.
+4. Rebuilt the local image (`docker compose up -d --build`) to apply the Dockerfile change, which incidentally surfaced and fixed a real pre-existing bug: `email-validator` had been `pip install`-ed directly into the old running container weeks ago but never actually rebuilt into the image itself, so it silently disappeared the moment the container got recreated. `requirements.txt` already listed it correctly; the image just needed rebuilding.
+5. **Verified for real:** full 17-test suite passes inside the rebuilt container; a real signup through the actual browser succeeds both before and after the rebuild (proving `API_URL`'s localhost fallback and the CORS default both still work locally); `--reload` confirmed active locally via the container's own startup log ("Will watch for changes").
+6. Still pending from Part A: push the repo to GitHub (no remote exists yet).
+
+**New decision, folded into Part B/C below:** user asked to also automate running migrations on deploy, not just for tonight's first deploy. Render Web Services have a **Pre-Deploy Command** field in their dashboard (separate from the container's own start command) that runs once before a new deploy goes live — set it to `alembic upgrade head`. This makes every *future* deploy that includes a new migration self-applying, with no manual shell step required ever again after tonight. Nothing to change in the repo for this — it's a one-time Render dashboard setting to fill in during Part B, step 6.
 
 **Part B — provision on Render:**
-5. Postgres database → real `DATABASE_URL`.
-6. Web Service for the backend, built from the existing `Dockerfile` → env vars: `DATABASE_URL`, a **freshly generated** `JWT_SECRET` (not the local dev one), the CORS-origin var.
-7. Static Site for the frontend (`npm install && npm run build`, publish `dist`) → set the API-URL var to the backend's Render URL.
-8. Loop back to the backend once the frontend's real URL exists, set its CORS var to that exact URL.
+1. Push to GitHub first (Render deploys from a repo).
+2. Postgres database → real `DATABASE_URL`.
+3. Web Service for the backend, built from the existing `Dockerfile` → env vars: `DATABASE_URL`, a **freshly generated** `JWT_SECRET` (not the local dev one), `FRONTEND_ORIGIN`. Set the **Pre-Deploy Command** to `alembic upgrade head` here too (see above).
+4. Static Site for the frontend (`npm install && npm run build`, publish `dist`) → set `VITE_API_URL` to the backend's Render URL.
+5. Loop back to the backend once the frontend's real URL exists, set `FRONTEND_ORIGIN` to that exact URL.
 
-**Part C — migrate the live database:** same `alembic upgrade head` as always, run via Render's shell into the backend service instead of `docker compose exec`. This is also the first genuinely fresh-database migration run this project has ever done (partially covers deferred item #15).
+**Part C — first migration run:** the Pre-Deploy Command above handles this automatically once set, including for tonight's very first deploy — no separate manual shell step needed. This is also the first genuinely fresh-database migration run this project has ever done (partially covers deferred item #15).
 
 **Part D — real smoke test on the live URL:** two fresh accounts, friend request, overlapping availability → match, create an outing, accept it — the same loop the integration tests already check, just proving it for real on the public internet.
 
