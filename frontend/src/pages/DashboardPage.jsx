@@ -1,6 +1,7 @@
 import {useState, useEffect, useRef} from "react"
 import {useNavigate, Link} from "react-router-dom"
 import ThemeToggle from "../components/ThemeToggle"
+import { API_URL } from "../api"
 
 function formatDateTime(dateInput) {
   const date = new Date(dateInput)
@@ -73,7 +74,7 @@ function DashboardPage() {
     async function fetchUser() {
       const token = localStorage.getItem("token")
       if (!token) return
-      const response = await fetch("http://localhost:8000/me", {
+      const response = await fetch(`${API_URL}/me`, {
       headers : {"Authorization": `Bearer ${token}`},
       })
       if (!response.ok) {
@@ -91,7 +92,7 @@ function DashboardPage() {
   async function displayFriends(){
     const token = localStorage.getItem("token")
     if (!token) return
-    const response = await fetch("http://localhost:8000/friends", {
+    const response = await fetch(`${API_URL}/friends`, {
       headers: {"Authorization": `Bearer ${token}` },
     })
     if (!response.ok) {
@@ -106,14 +107,14 @@ function DashboardPage() {
     displayFriends()
   }, [])
   async function handleRemoveFriend(friendId) {
-    const ok = await runAction(`remove-friend-${friendId}`, `http://localhost:8000/friends/${friendId}/remove`)
+    const ok = await runAction(`remove-friend-${friendId}`, `${API_URL}/friends/${friendId}/remove`)
     if (ok) displayFriends()
   }
   const [friendsList, setFriendsList] = useState([])
   async function displayFriendsList(){
     const token= localStorage.getItem("token")
     if (!token) return
-    const response = await fetch("http://localhost:8000/friend_requests/pending", {
+    const response = await fetch(`${API_URL}/friend_requests/pending`, {
       headers: {"Authorization" : `Bearer ${token}` },
     })
     if (!response.ok) {
@@ -128,11 +129,11 @@ function DashboardPage() {
     displayFriendsList()
   },[])
   async function handleAccept(id){
-    const ok = await runAction(`accept-request-${id}`, `http://localhost:8000/friend_requests/${id}/accept`)
+    const ok = await runAction(`accept-request-${id}`, `${API_URL}/friend_requests/${id}/accept`)
     if (ok) { displayFriendsList(); displayFriends() }
   }
   async function handleDecline(id){
-    const ok = await runAction(`decline-request-${id}`, `http://localhost:8000/friend_requests/${id}/decline`)
+    const ok = await runAction(`decline-request-${id}`, `${API_URL}/friend_requests/${id}/decline`)
     if (ok) displayFriendsList()
   }
   const [requestEmail, setRequestEmail] = useState("")
@@ -143,7 +144,7 @@ function DashboardPage() {
     e.preventDefault()
     setSendingRequest(true)
     const token = localStorage.getItem("token")
-    const response = await fetch(`http://localhost:8000/friend_requests`, {
+    const response = await fetch(`${API_URL}/friend_requests`, {
       method : "POST",
       headers : {
         "Content-Type": "application/json",
@@ -172,7 +173,7 @@ function DashboardPage() {
   async function displayMyAvailability() {
     const token = localStorage.getItem("token")
     if (!token) return
-    const response = await fetch(`http://localhost:8000/availability/mine`, {
+    const response = await fetch(`${API_URL}/availability/mine`, {
       headers : {"Authorization" : `Bearer ${token}`}
     })
     if (!response.ok) {
@@ -187,7 +188,7 @@ function DashboardPage() {
     displayMyAvailability()
   }, [])
   async function handleDeleteAvailability(availabilityId) {
-    const ok = await runAction(`delete-availability-${availabilityId}`, `http://localhost:8000/availability/${availabilityId}/delete`)
+    const ok = await runAction(`delete-availability-${availabilityId}`, `${API_URL}/availability/${availabilityId}/delete`)
     if (ok) displayMyAvailability()
   }
   async function handlePostAvailabilty(e){
@@ -199,7 +200,7 @@ function DashboardPage() {
     }
     setPostingAvailability(true)
     const token = localStorage.getItem("token")
-    const response = await fetch(`http://localhost:8000/availability`, {
+    const response = await fetch(`${API_URL}/availability`, {
       method: "POST",
       headers : {
         "Content-Type" : "application/json",
@@ -249,7 +250,7 @@ function DashboardPage() {
   async function displayMatched() {
     const token = localStorage.getItem("token")
     if (!token) return
-    const response = await fetch(`http://localhost:8000/availability/matches`, {
+    const response = await fetch(`${API_URL}/availability/matches`, {
       headers : { "Authorization" : `Bearer ${token}`}
     })
     if (!response.ok) {
@@ -276,7 +277,7 @@ function DashboardPage() {
   async function displayOutingInvites() {
     const token = localStorage.getItem("token")
     if (!token) return
-    const response = await fetch(`http://localhost:8000/outing_invites/pending`, {
+    const response = await fetch(`${API_URL}/outing_invites/pending`, {
       headers : {"Authorization" : `Bearer ${token} `}
     })
     if (!response.ok) {
@@ -295,7 +296,7 @@ function DashboardPage() {
   async function displayCurrentOutings() {
     const token = localStorage.getItem("token")
     if (!token) return
-    const response = await fetch(`http://localhost:8000/outings/current`, {
+    const response = await fetch(`${API_URL}/outings/current`, {
       headers : {"Authorization" : `Bearer ${token}`}
     })
     if (!response.ok) {
@@ -311,22 +312,22 @@ function DashboardPage() {
   }, [])
 
   async function handleLeaveOuting(outingId) {
-    const ok = await runAction(`leave-outing-${outingId}`, `http://localhost:8000/outings/${outingId}/leave`)
+    const ok = await runAction(`leave-outing-${outingId}`, `${API_URL}/outings/${outingId}/leave`)
     if (ok) displayCurrentOutings()
   }
 
   async function handleDeleteOuting(outingId) {
-    const ok = await runAction(`delete-outing-${outingId}`, `http://localhost:8000/outings/${outingId}/delete`)
+    const ok = await runAction(`delete-outing-${outingId}`, `${API_URL}/outings/${outingId}/delete`)
     if (ok) displayCurrentOutings()
   }
 
   async function handleAcceptOuting(id) {
-    const ok = await runAction(`accept-outing-${id}`, `http://localhost:8000/outing_invites/${id}/accept`)
+    const ok = await runAction(`accept-outing-${id}`, `${API_URL}/outing_invites/${id}/accept`)
     if (ok) { displayOutingInvites(); displayCurrentOutings() }
   }
 
   async function handleDeclineOuting(id) {
-    const ok = await runAction(`decline-outing-${id}`, `http://localhost:8000/outing_invites/${id}/decline`)
+    const ok = await runAction(`decline-outing-${id}`, `${API_URL}/outing_invites/${id}/decline`)
     if (ok) displayOutingInvites()
   }
 
@@ -359,7 +360,7 @@ function DashboardPage() {
     }
     setCreatingOuting(true)
     const token = localStorage.getItem("token")
-    const response = await fetch(`http://localhost:8000/outings`, {
+    const response = await fetch(`${API_URL}/outings`, {
       method : "POST",
       headers : {
         "Content-Type" : "application/json",

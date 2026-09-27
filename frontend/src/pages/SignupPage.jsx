@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { API_URL } from "../api"
 
 function formatErrorDetail(detail) {
   if (Array.isArray(detail)) {
@@ -19,7 +20,7 @@ function SignupPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setIsSubmitting(true)
-    const response = await fetch("http://localhost:8000/signup", {
+    const response = await fetch(`${API_URL}/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, username, password }),
