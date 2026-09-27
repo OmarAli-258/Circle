@@ -17,6 +17,9 @@ services:
     build: ./backend
     restart: unless-stopped
     env_file: .env
+    # overrides the Dockerfile's plain CMD with --reload for local dev only -
+    # the deployed image builds straight from the Dockerfile and never sees this
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     volumes:
