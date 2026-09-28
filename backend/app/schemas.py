@@ -1,11 +1,18 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional
 
 class UserCreate(BaseModel):
     email: EmailStr
     username: str = Field(min_length=1, max_length=50)
-    password: str = Field(min_length=1)
+    password: str = Field(min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def password_must_have_letter_and_number(cls, value):
+        if not any(c.isalpha() for c in value) or not any(c.isdigit() for c in value):
+            raise ValueError("password must contain at least one letter and one number")
+        return value
 class UserOut(BaseModel):
     id: int
     email: str

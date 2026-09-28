@@ -238,6 +238,10 @@ def get_availability_matches(current_user: User = Depends(get_current_user), db:
 def create_outings(outing_data : OutingCreate, current_user : User = Depends(get_current_user), db : Session = Depends(get_db)):
     friend_ids = get_friend_ids(current_user.id, db)
     unique_invitee_ids = list(dict.fromkeys(outing_data.invitee_ids))  # de-duplicate, keep order
+    if not unique_invitee_ids:
+        raise HTTPException(status_code=400, detail="an outing needs at least one invitee")
+    if outing_data.proposed_time <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="proposed time must be in the future")
     for invitee_id in unique_invitee_ids:
         if invitee_id not in friend_ids:
             raise HTTPException(status_code=400, detail="invitee is not a friend")

@@ -46,7 +46,7 @@ function SignupPage() {
           <label htmlFor="signup-username">Username</label>
           <input id="signup-username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required />
           <label htmlFor="signup-password">Password</label>
-          <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required />
+          <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} required />
           <button type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing up..." : "Sign up"}</button>
         </form>
         {message && <p className={messageIsError ? "form-message" : "form-message form-message--success"}>{message}</p>}

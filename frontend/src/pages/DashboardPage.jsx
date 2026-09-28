@@ -311,6 +311,17 @@ function DashboardPage() {
     displayCurrentOutings()
   }, [])
 
+  useEffect(() => {
+    const pollId = setInterval(() => {
+      displayFriends()
+      displayFriendsList()
+      displayMatched()
+      displayOutingInvites()
+      displayCurrentOutings()
+    }, 15000)
+    return () => clearInterval(pollId)
+  }, [])
+
   async function handleLeaveOuting(outingId) {
     const ok = await runAction(`leave-outing-${outingId}`, `${API_URL}/outings/${outingId}/leave`)
     if (ok) displayCurrentOutings()
@@ -486,7 +497,7 @@ function DashboardPage() {
           <h3>Outing Invites</h3>
           {outingInvites.map(invite => (
             <p className="list-row" key={invite.id}>
-              <span>{invite.outing_title}, {invite.outing_location}, {invite.outing_time}</span>
+              <span>{invite.outing_title}, {invite.outing_location}, {formatDateTime(invite.outing_time)}</span>
               <span className="row-actions">
                 <button disabled={pendingAction === `accept-outing-${invite.id}`} onClick={() => handleAcceptOuting(invite.id)}>Accept</button>
                 <button className="btn-secondary" disabled={pendingAction === `decline-outing-${invite.id}`} onClick={() => handleDeclineOuting(invite.id)}>Decline</button>
