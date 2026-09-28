@@ -2,7 +2,9 @@
 
 A social coordination app: mark yourself free, get matched with friends whose availability overlaps, and get invited to (or propose) outings — without a WhatsApp group chat argument.
 
-![Circle dashboard](docs/screenshots/dashboard.png)
+**[Live demo](https://circle-frontend-izja.onrender.com)** — the backend is on a free tier and spins down when idle, so the first request after a quiet stretch can take up to a minute to wake back up. Totally normal, not broken.
+
+![Circle homepage](docs/screenshots/homepage.png)
 
 ## Why this exists
 
@@ -25,15 +27,16 @@ Organizing a hangout usually means a group chat, everyone slowly replying with t
 
 ## Screenshots
 
-| Login | Dashboard |
+| Homepage | Dashboard |
 |---|---|
-| ![Login page](docs/screenshots/login.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+| ![Circle homepage](docs/screenshots/homepage.png) | ![Dashboard](docs/screenshots/dashboard.png) |
 
 ## Tech stack
 
 - **Backend:** Python, FastAPI, SQLAlchemy, PostgreSQL, Alembic migrations, JWT auth
 - **Frontend:** React (Vite), react-router-dom, plain JavaScript/JSX, hand-written CSS
-- **Infra:** Docker Compose (backend + database), GitHub Actions (CI)
+- **Infra (local):** Docker Compose (backend + database), GitHub Actions (CI)
+- **Infra (deployed):** Render (backend web service + static frontend site), Neon (serverless PostgreSQL)
 
 ## Getting started
 
