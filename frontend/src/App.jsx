@@ -5,10 +5,12 @@ import SignupPage from "./pages/SignupPage"
 import LoginPage from "./pages/LoginPage"
 import DashboardPage from "./pages/DashboardPage"
 import { getPreferredTheme } from "./theme"
+import { wakeBackend } from "./api"
 
 function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = getPreferredTheme()
+    wakeBackend()
   }, [])
 
   return (

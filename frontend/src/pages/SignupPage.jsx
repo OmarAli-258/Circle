@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { API_URL } from "../api"
+import { useSlowHint } from "../useSlowHint"
 
 function formatErrorDetail(detail) {
   if (Array.isArray(detail)) {
@@ -16,6 +17,7 @@ function SignupPage() {
   const [message, setMessage] = useState("")
   const [messageIsError, setMessageIsError] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSlow = useSlowHint(isSubmitting)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -49,6 +51,7 @@ function SignupPage() {
           <input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" minLength={8} required />
           <button type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing up..." : "Sign up"}</button>
         </form>
+        {isSlow && <p className="empty-state">Waking up the server. The first request after a quiet stretch can take up to a minute.</p>}
         {message && <p className={messageIsError ? "form-message" : "form-message form-message--success"}>{message}</p>}
         <p><Link to="/login">Already have an account? Log in</Link></p>
       </div>

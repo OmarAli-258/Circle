@@ -1044,7 +1044,15 @@ User chose to fix #1, #4, and #2 tonight and deliberately leave #3 and #5 (plus 
 
 ---
 
-## RESUME HERE — the project is functionally complete, fully verified live, and this final round of fixes is tested but **not yet committed**. User runs the commit themselves (no `Co-Authored-By` trailer, per their standing instruction).
+### Cold-start mitigation, option 1 of 3 (2026-10-02)
+
+User wanted a way around the first-click delay. Cause, confirmed against Render's current docs: free web services spin down after 15 idle minutes and take about a minute to wake; each workspace gets 750 free instance hours a month. (Neon's scale-to-zero wake is only ~1-2s, left alone.) Three options were laid out; user picked **option 1**, the free in-repo one: `wakeBackend()` in `api.js` fires a silent `GET /health` from `App.jsx`'s mount effect (so every entry route triggers it, including direct links to `/login` or `/signup`), and a small `useSlowHint` hook (`useSlowHint.js`) makes Login and Signup show "Waking up the server..." if a submit is still pending after 4 seconds. It shortens the wait and makes the remainder look intentional; it does not remove it. Verified locally: the backend log shows `GET /health` on page load, and with the login request artificially delayed 7s the hint was absent at 2s, present at 5s, and gone once the response arrived. Lint and build clean. Deliberately pings `/health` (no DB) so Neon is not kept awake.
+
+**Not done, deliberately:** option 2 (a scheduled external keep-alive ping) would remove cold starts entirely, but a service kept awake 24/7 uses 744 of the 750 free hours in a 31-day month, and exceeding the cap suspends the backend until next month. If used, ping only `/health`, only during active job-hunting, ideally with a time window (cron-job.org supports schedules). Option 3 is Render's paid tier.
+
+---
+
+## RESUME HERE — everything above is committed except the option-1 change just described (user runs the commit themselves, no `Co-Authored-By` trailer, per their standing instruction). Next: the interview-prep loop.
 
 Still genuinely deferred, not scheduled, no urgency - and now explicitly earmarked as interview-conversation material rather than a to-do list: #3 (no automated test proves the deployed/Postgres journey, only today's one-off manual pass did), #5 (large files; read-fetches don't catch genuine network failures), the email-verification and rate-limiting half of #2, #8 (soften the "mutual reveal" copy - directly related to #1 above), #19 (accessibility pass), #20 (split `DashboardPage.jsx`), a free external keep-alive ping for Render's spin-down delay.
 

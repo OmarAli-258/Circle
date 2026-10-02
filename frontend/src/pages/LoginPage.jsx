@@ -1,12 +1,14 @@
 import { useState } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { API_URL } from "../api"
+import { useSlowHint } from "../useSlowHint"
 
 function LoginPage() {
   const [loginEmail, setLoginEmail] = useState("")
   const [loginPassword, setLoginPassword] = useState("")
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSlow = useSlowHint(isSubmitting)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -39,6 +41,7 @@ function LoginPage() {
           <input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} autoComplete="current-password" />
           <button type="submit" disabled={isSubmitting}>{isSubmitting ? "Logging in..." : "Log in"}</button>
         </form>
+        {isSlow && <p className="empty-state">Waking up the server. The first request after a quiet stretch can take up to a minute.</p>}
         {message && <p className="form-message">{message}</p>}
         <p><Link to="/signup">Need an account? Sign up</Link></p>
       </div>
